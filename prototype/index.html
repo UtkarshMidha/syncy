@@ -155,6 +155,17 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .person .role { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .person .next { font-size: 13px; margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
 
+/* ---------- contacts: drag + multi-select ---------- */
+.person[data-cid] { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.drag-ghost { position: fixed; left: 0; top: 0; z-index: 99; margin: 0; opacity: .94; box-shadow: 0 14px 32px rgba(40, 28, 16, .25); pointer-events: none; }
+.drag-src { opacity: .35; }
+.dropzone { border-radius: 14px; }
+.dropzone.over { outline: 2px dashed var(--accent-2); outline-offset: 3px; background: var(--accent-soft); }
+.sel-dot { flex: none; width: 22px; height: 22px; margin-top: 6px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; color: #fff; background: #fff; }
+.person.selected { outline: 2px solid var(--accent-2); }
+.person.selected .sel-dot { background: var(--accent-2); border-color: var(--accent-2); }
+.assignbar { position: sticky; bottom: 6px; z-index: 5; margin-top: 14px; padding: 12px; box-shadow: 0 -4px 18px rgba(40, 28, 16, .10), var(--shadow); }
+
 /* ---------- scan ---------- */
 .flowbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .flowbar .step { font-size: 13px; color: var(--muted); }
@@ -353,7 +364,7 @@ function freshUi() {
   return {
     tab: 'today', screen: 'today', eventId, pickId: null, eventForm: null,
     contactId: null, draft: null, from: null,
-    noteMode: 'text', noteText: '', rec: { status: 'idle', secs: 0, words: 0 },
+    noteMode: 'voice', noteText: '', rec: { status: 'idle', secs: 0, words: 0 },
     justScanned: null, projForm: null, evConfirm: null,
   };
 }
@@ -457,6 +468,7 @@ function go(screen, force = false) {
   clearTimers();
   if (['today', 'contacts', 'projects'].includes(screen)) ui.tab = screen;
   ui.screen = screen;
+  if (screen !== 'contacts') ui.sel = null;
   if (navigationReady) {
     const snapshot = captureNavigationState(crypto.randomUUID());
     navigationSnapshots.set(snapshot.key, snapshot);
@@ -481,7 +493,7 @@ function restoreNavigationState(snapshot) {
     tab: ['today', 'contacts', 'projects'].includes(snapshot.tab) ? snapshot.tab : 'today',
     eventId: snapshot.eventId || null, pickId: snapshot.pickId || null, eventForm: snapshot.eventForm || null,
     contactId: snapshot.contactId || null, draft: snapshot.draft || null, from: snapshot.from || null,
-    noteMode: snapshot.noteMode || 'text', noteText: snapshot.noteText || '',
+    noteMode: snapshot.noteMode || 'voice', noteText: snapshot.noteText || '',
     rec: snapshot.rec || { status: 'idle', secs: 0, words: 0 },
     justScanned: snapshot.justScanned || null, projForm: snapshot.projForm || null,
     evConfirm: snapshot.evConfirm || null, editUrl: Boolean(snapshot.editUrl), error: snapshot.error || null,
@@ -527,12 +539,16 @@ function render() {
 }
 
 // ---------- screens ----------
-function personRow(c) {
+function personRow(c, assignable) {
   const p = proj(c.project_id);
+  const selecting = assignable && Array.isArray(ui.sel);
+  const checked = selecting && ui.sel.includes(c.id);
+  const act = selecting ? `toggleSel('${c.id}')` : `openContact('${c.id}')`;
   const status = c.status === 'captured'
     ? '<span class="pill">✍️ Needs a note</span>'
     : `${p ? `<span class="pill grey">${projTag(p)} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill grey">No project</span>'}${c.next_step ? `<span class="pill grey">→ ${esc(c.next_step)}${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</span>` : ''}`;
-  return `<div class="card person" role="button" tabindex="0" onclick="openContact('${c.id}')" onkeydown="if(event.key==='Enter')openContact('${c.id}')">
+  return `<div class="card person${checked ? ' selected' : ''}"${assignable && !selecting ? ` data-cid="${c.id}"` : ''} role="button" tabindex="0" onclick="${act}" onkeydown="if(event.key==='Enter')${act}">
+    ${selecting ? `<span class="sel-dot">${checked ? '✓' : ''}</span>` : ''}
     ${avatar(c.name)}
     <div class="meta">
       <div class="name">${esc(c.name || c.profile_slug)} ${srcBadge(c.source, c.profile_url)}</div>
@@ -550,12 +566,23 @@ const SCREENS = {
     const all = db.list('contacts');
     const groups = projects().map(p => ({ p, list: all.filter(c => c.project_id === p.id) }));
     const none = all.filter(c => !c.project_id);
+    const selecting = Array.isArray(ui.sel);
     return `
-      <div class="title">Contacts</div>
-      <p class="sub">All events, grouped by project. Filters and sorting: <a href="dashboard.html" class="linkbtn">dashboard</a>.</p>
-      ${groups.map(g => `<div class="section-title">${projTag(g.p)} ${esc(g.p.name)} · ${g.list.length}</div>
-        ${g.list.length ? g.list.map(personRow).join('') : '<div class="empty small">No one yet</div>'}`).join('')}
-      ${none.length ? `<div class="section-title">No project yet · ${none.length}</div>${none.map(personRow).join('')}` : ''}`;
+      <div class="title" style="display:flex;align-items:center;justify-content:space-between">Contacts
+        <button class="linkbtn" onclick="toggleSelectMode()">${selecting ? 'Done' : 'Select'}</button></div>
+      <p class="sub">${selecting
+        ? 'Tap the contacts to move, then choose a project below.'
+        : 'Grouped by project. Drag a card onto a group (press and hold on the phone), or tap Select for several at once.'}
+        Filters and sorting: <a href="dashboard.html" class="linkbtn">dashboard</a>.</p>
+      ${groups.map(g => `<div class="dropzone" data-pid="${g.p.id}"><div class="section-title">${projTag(g.p)} ${esc(g.p.name)} · ${g.list.length}</div>
+        ${g.list.length ? g.list.map(c => personRow(c, true)).join('') : '<div class="empty small">No one yet</div>'}</div>`).join('')}
+      <div class="dropzone" data-pid=""><div class="section-title">No project yet · ${none.length}</div>
+        ${none.length ? none.map(c => personRow(c, true)).join('') : '<div class="empty small">Everyone is assigned</div>'}</div>
+      ${selecting && ui.sel.length ? `<div class="card assignbar">
+        <div class="small" style="font-weight:650">${ui.sel.length} selected → assign to</div>
+        <div class="pchips" style="margin-top:8px">
+          ${projects().map(p => `<button class="pchip" onclick="assignSelected('${p.id}')">${projTag(p)} ${esc(p.name.split(':')[0])}</button>`).join('')}
+          <button class="pchip" onclick="assignSelected('none')">No project</button></div></div>` : ''}`;
   },
 
   projects() {
@@ -646,8 +673,8 @@ const SCREENS = {
       </div>
       <div class="title" style="margin-top:14px">How did it go with ${esc((c.name || 'them').split(' ')[0])}?</div>
       <div class="seg" role="tablist">
-        <button class="${textMode ? 'on' : ''}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
         <button class="${textMode ? '' : 'on'}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">🎙️ Voice memo</button>
+        <button class="${textMode ? 'on' : ''}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
       </div>
       <div class="prompts"><span>Who are they?</span><span>What do they need?</span><span>What did you agree?</span></div>
       ${textMode ? `
@@ -736,7 +763,7 @@ const SCREENS = {
         <div class="title">Saved</div>
         <p class="sub">${esc(c.name)} is filed under ${p ? `<b>${projTag(p)} ${esc(p.name)}</b>` : 'your contacts'}${c.next_step ? `, next: ${esc(c.next_step)}${c.next_step_date ? ' (' + fmtDate(c.next_step_date) + ')' : ''}` : ''}.</p></div>
       <div class="section-title">At ${esc(event(c.event_id)?.name || 'this event')}</div>
-      ${eventContacts(c.event_id).map(personRow).join('')}
+      ${eventContacts(c.event_id).map(c => personRow(c)).join('')}
       <div class="phase2"><span class="n-logo">N</span>Notion is used to import projects only. Contacts and notes stay in Syncy.</div>
       <div class="row" style="margin-top:16px">
         <a class="btn" href="dashboard.html">Dashboard</a>
@@ -827,7 +854,7 @@ function eventHome() {
     </div>
     <button class="scan-cta" onclick="startScan()">${ICONS.qr}<span><b>Scan someone's QR</b><small>LinkedIn · Xing · any profile link</small></span></button>
     <div class="section-title">People at this event</div>
-    ${list.length ? list.map(personRow).join('') : '<div class="empty">Nobody yet. Scan the first QR code.</div>'}`;
+    ${list.length ? list.map(c => personRow(c)).join('') : '<div class="empty">Nobody yet. Scan the first QR code.</div>'}`;
 }
 
 // ---------- after-render hooks ----------
@@ -952,9 +979,78 @@ function scanned(raw) {
   later(() => openNote(row.id), 1600);
 }
 
+// ---------- actions: contacts tab (assign to projects) ----------
+function toggleSelectMode() { ui.sel = Array.isArray(ui.sel) ? null : []; render(); }
+function toggleSel(id) { ui.sel = ui.sel.includes(id) ? ui.sel.filter(x => x !== id) : [...ui.sel, id]; render(); }
+function assignSelected(pid) { assignContactsTo(pid === 'none' ? null : pid, ui.sel); ui.sel = null; render(); }
+function assignContactsTo(projectId, ids) {
+  const p = projectId && db.get('projects', projectId);
+  for (const id of ids) db.update('contacts', id, p
+    ? { project_id: p.id, project_set_by: 'user', match_confidence: null, match_reason: `Assigned by you to “${p.name}”.` }
+    : { project_id: null, project_set_by: 'user', match_confidence: null, match_reason: 'You chose not to link a project.' });
+}
+
+// Drag a contact card onto a project group. Pointer events so one code path covers
+// mouse (drag after a small move) and touch (press-and-hold, so plain scrolling still works).
+let drag = null, suppressClick = false;
+const DRAG_HOLD_MS = 300, DRAG_SLOP = 8;
+const dragPreventScroll = e => e.preventDefault();
+function startDrag(x, y) {
+  const r = drag.card.getBoundingClientRect();
+  const ghost = drag.card.cloneNode(true);
+  ghost.classList.add('drag-ghost');
+  ghost.style.width = r.width + 'px';
+  document.body.appendChild(ghost);
+  Object.assign(drag, { ghost, dx: x - r.left, dy: y - r.top, started: true });
+  drag.card.classList.add('drag-src');
+  document.addEventListener('touchmove', dragPreventScroll, { passive: false });
+  moveDrag(x, y);
+}
+function moveDrag(x, y) {
+  drag.ghost.style.transform = `translate(${x - drag.dx}px, ${y - drag.dy}px)`;
+  drag.ghost.style.display = 'none';
+  const zone = document.elementFromPoint(x, y)?.closest('.dropzone') || null;
+  drag.ghost.style.display = '';
+  document.querySelectorAll('.dropzone.over').forEach(z => z !== zone && z.classList.remove('over'));
+  zone?.classList.add('over');
+  drag.zone = zone;
+}
+function endDrag(drop) {
+  if (!drag) return;
+  clearTimeout(drag.timer);
+  document.removeEventListener('touchmove', dragPreventScroll);
+  document.querySelectorAll('.drag-src').forEach(el => el.classList.remove('drag-src'));
+  document.querySelectorAll('.dropzone.over').forEach(z => z.classList.remove('over'));
+  drag.ghost?.remove();
+  const { id, zone, started } = drag;
+  drag = null;
+  if (!started) return;
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+  if (drop && zone) { assignContactsTo(zone.dataset.pid || null, [id]); render(); }
+}
+document.addEventListener('pointerdown', e => {
+  if (ui.screen !== 'contacts' || Array.isArray(ui.sel) || e.button) return;
+  const card = e.target.closest('.person[data-cid]');
+  if (!card) return;
+  drag = { id: card.dataset.cid, card, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, started: false, zone: null,
+    timer: e.pointerType === 'mouse' ? null : setTimeout(() => drag && startDrag(drag.lx, drag.ly), DRAG_HOLD_MS) };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.lx = e.clientX; drag.ly = e.clientY;
+  if (drag.started) return moveDrag(e.clientX, e.clientY);
+  if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) <= DRAG_SLOP) return;
+  if (e.pointerType === 'mouse') startDrag(e.clientX, e.clientY);
+  else { clearTimeout(drag.timer); drag = null; } // finger is scrolling, not dragging
+});
+document.addEventListener('pointerup', () => endDrag(true));
+document.addEventListener('pointercancel', () => endDrag(false));
+document.addEventListener('contextmenu', e => { if (drag?.started) e.preventDefault(); });
+document.addEventListener('click', e => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+
 // ---------- actions: note ----------
 function openNote(id) {
-  ui.contactId = id; ui.noteMode = 'text'; ui.noteText = '';
+  ui.contactId = id; ui.noteMode = 'voice'; ui.noteText = '';
   ui.audioBlob = null; ui.error = null; ui.rec = { status: 'idle', secs: 0, words: 0 };
   go('note');
 }
@@ -1344,7 +1440,15 @@ window.addEventListener('popstate', event => {
 document.addEventListener('input', saveNavigationState);
 document.addEventListener('change', saveNavigationState);
 document.addEventListener('click', saveNavigationState);
-async function signOut() { try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+async function signOut() { if (!db.live) { location.reload(); return; } try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+// A local checkout has no config.js (it is generated only in the Vercel build), so offer the demo instead.
+function startDemo() {
+  document.getElementById('tabbar').style.display = '';
+  document.getElementById('sideIntro').textContent = 'Demo mode (no Supabase):';
+  document.getElementById('sideNote').textContent = 'Local sample data only — nothing is saved to an account.';
+  ui = freshUi();
+  render();
+}
 ui = freshUi();
 db.init().then(authenticated => {
   if (!authenticated) { location.replace('login.html?next=index.html'); return; }
@@ -1363,8 +1467,11 @@ db.init().then(authenticated => {
   render();
   refreshNotionStatus().then(() => render());
 }).catch(error => {
+  const noConfig = !window.SYNCY_CONFIG?.supabaseUrl || !window.SYNCY_CONFIG?.supabaseAnonKey;
   document.getElementById('sideNote').textContent = error.message || 'Check the Supabase URL and public key, then reload.';
-  document.getElementById('screen').innerHTML = '<div class="title">Could not connect to Supabase</div><p class="muted">Check your configuration and connection, then reload this page.</p><button class="btn btn-primary" onclick="location.reload()">Retry</button>';
+  document.getElementById('screen').innerHTML = noConfig
+    ? '<div class="title">Local checkout — no Supabase</div><p class="muted">config.js ships only with the deployed build, so this is normal here. Try every screen with demo data instead.</p><button class="btn btn-primary" onclick="startDemo()">Continue with demo data</button>'
+    : '<div class="title">Could not connect to Supabase</div><p class="muted">Check your configuration and connection, then reload this page.</p><button class="btn btn-primary" onclick="location.reload()">Retry</button>';
   document.getElementById('tabbar').style.display = 'none';
 });
 </script>

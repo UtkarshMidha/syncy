@@ -598,6 +598,14 @@ db.init().then(authenticated => {
   document.querySelector('.app').style.visibility = 'visible';
   renderAll();
 }).catch(error => {
+  // A local checkout has no config.js (generated only in the Vercel build): show the demo data instead.
+  if (!window.SYNCY_CONFIG?.supabaseUrl || !window.SYNCY_CONFIG?.supabaseAnonKey) {
+    const app = document.querySelector('.app');
+    app.style.visibility = 'visible';
+    app.insertAdjacentHTML('afterbegin', '<div style="background:#2b2320;color:#fff;font-size:12px;padding:6px 14px;text-align:center">Demo mode · local sample data, nothing saved to an account</div>');
+    renderAll();
+    return;
+  }
   document.querySelector('.app').innerHTML = '<main class="main"><h1>Could not connect to Supabase</h1><p>Check your configuration and connection, then reload.</p><button class="btn" onclick="location.reload()">Retry</button></main>';
 });
 </script>
