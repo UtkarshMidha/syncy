@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Sign in · Syncy</title>
   <style>
     :root { color-scheme: light; --ink:#201a16; --muted:#756a61; --line:#e9ded2; --accent:#e4602a; --paper:#fffdfa; }
     * { box-sizing:border-box }
-    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; background:#f5f0e9; color:var(--ink); font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+    body { margin:0; min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px; background:#f5f0e9; color:var(--ink); font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
     .card { width:min(100%,440px); padding:30px; background:var(--paper); border:1px solid var(--line); border-radius:24px; box-shadow:0 18px 50px #3b27100d }
     .brand { display:flex; align-items:center; gap:10px; margin-bottom:26px; font-weight:750; font-size:20px }
     .logo { width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg,#ffc45c,var(--accent)); box-shadow:0 3px 12px #e4602a55 }
@@ -21,13 +21,16 @@
     .primary { margin-top:18px; background:var(--accent); color:white }
     .google { margin-top:12px; background:white; border:1px solid var(--line) }
     .links { display:flex; justify-content:space-between; gap:12px; margin-top:14px }
-    .link { width:auto; padding:4px 0; background:none; color:#b64a20; font-size:13px }
-    .status { min-height:24px; margin:12px 0 0; color:var(--muted); font-size:13px }
+    .link { width:auto; min-height:44px; padding:8px 0; background:none; color:#b64a20; font-size:13px }
+    .status { min-height:24px; margin:12px 0 0; color:var(--muted); font-size:13px; overflow-wrap:anywhere }
     .status.error { color:#b42318 }
     .divider { display:flex; align-items:center; gap:12px; margin:16px 0 2px; color:var(--muted); font-size:12px }
     .divider:before,.divider:after { content:""; height:1px; flex:1; background:var(--line) }
     [hidden] { display:none !important }
-    @media(max-width:480px) { body { padding:14px } .card { padding:23px 20px } }
+    @media(max-width:480px) {
+      body { place-items:start center; padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)) }
+      .card { padding:23px 20px; margin-block:auto }
+    }
   </style>
 </head>
 <body>

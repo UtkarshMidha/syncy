@@ -38,6 +38,7 @@ body {
 }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
 input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
 
 /* ---------- desktop side panel ---------- */
 .side { max-width: 300px; }
@@ -63,12 +64,12 @@ input, textarea, select { font: inherit; color: inherit; }
   .side { display: none; }
   .phone { width: 100%; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; }
 }
-.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 24px 18px; scrollbar-width: none; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: max(24px, calc(12px + env(safe-area-inset-top))) 18px max(24px, env(safe-area-inset-bottom)); scrollbar-width: none; }
 .screen::-webkit-scrollbar { display: none; }
 .screen.dark { background: #15120f; color: #fff; }
 
 /* ---------- tab bar ---------- */
-.tabbar { flex: none; display: flex; border-top: 1px solid var(--line); padding: 8px 8px 22px; background: var(--phone); }
+.tabbar { flex: none; display: flex; border-top: 1px solid var(--line); padding: 8px 8px max(22px, calc(8px + env(safe-area-inset-bottom))); background: var(--phone); }
 .tabbar button, .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); padding: 4px 0; text-decoration: none; }
 .tabbar button.on { color: var(--accent); font-weight: 600; }
 .tabbar svg { width: 24px; height: 24px; }
@@ -83,12 +84,12 @@ input, textarea, select { font: inherit; color: inherit; }
 .small { font-size: 13px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
 .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 8px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 14px; font-weight: 600; background: #f1ebe3; text-decoration: none; color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 14px; font-weight: 600; background: #f1ebe3; text-decoration: none; color: var(--ink); }
 .btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .3); }
 .btn-block { width: 100%; }
 .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
-.btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
-.icon-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; font-size: 16px; }
+.btn-sm { min-height: 44px; padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; font-size: 16px; flex: none; }
 .dark .icon-btn { background: rgba(255, 255, 255, .12); color: #fff; }
 .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
@@ -111,8 +112,9 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .empty { text-align: center; color: var(--muted); padding: 22px 10px; border: 1.5px dashed var(--line); border-radius: var(--radius); }
 
 /* ---------- event picker ---------- */
-.ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; }
-.ev-del { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); background: #f6f1ea; font-size: 12px; }
+.ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; }
+.ev-option .ev-select { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 0; text-align: left; }
+.ev-del { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); background: #f6f1ea; font-size: 12px; }
 .ev-del:hover { color: #b42318; background: #fdebe8; }
 .ev-option .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
 .ev-option.on { border-color: var(--accent); background: #fff8f2; }
@@ -123,9 +125,9 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .ev-option .today { font-size: 11px; font-weight: 700; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 7px; border-radius: 999px; margin-left: 6px; }
 .new-event { border: 1.5px dashed var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
 .pchips { display: flex; flex-wrap: wrap; gap: 6px; }
-.pchip { font-size: 13px; font-weight: 600; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--muted); text-align: left; }
+.pchip { min-height: 44px; font-size: 13px; font-weight: 600; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--muted); text-align: left; }
 .pchip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
-.ev-edit { display: block; margin: -2px 0 10px 46px; font-size: 13px; font-weight: 600; color: var(--accent-ink); }
+.ev-edit { display: block; min-height: 44px; padding: 8px 0; margin: -2px 0 10px 46px; font-size: 13px; font-weight: 600; color: var(--accent-ink); }
 .ev-option .ev-link { display: block; font-size: 12px; color: var(--accent-ink); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ev-url { display: flex; gap: 10px; align-items: center; margin-top: 4px; font-size: 12.5px; }
 .ev-url a { color: #ffd9a0; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -246,10 +248,24 @@ ul.bul li { margin: 3px 0; }
 
 /* ---------- projects ---------- */
 .proj-card { margin-bottom: 10px; }
-.proj-card .ph { display: flex; gap: 10px; align-items: center; font-weight: 700; }
+.proj-card.display { padding: 12px; }
+.proj-card .ph { display: flex; gap: 8px; align-items: center; font-weight: 700; }
+.proj-card .ph > span:nth-child(2) { overflow-wrap: anywhere; }
 .proj-card .emoji { width: 36px; height: 36px; border-radius: 10px; background: #f6f1ea; display: grid; place-items: center; font-size: 18px; }
 .proj-card .goal { color: var(--muted); font-size: 13.5px; margin: 6px 0 8px; }
+.proj-card .goal { overflow-wrap: anywhere; }
+.proj-actions { display: flex; gap: 8px; flex: none; }
+.proj-action { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; }
+.proj-action svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.proj-action.delete { color: #b42318; }
 .faces { display: flex; gap: 6px; flex-wrap: wrap; }
+details.card > summary { min-height: 44px; display: flex; align-items: center; }
+@media (max-width: 760px) {
+  input, textarea, select { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
 </style>
 </head>
 <body>
@@ -320,6 +336,12 @@ const STAGE_LABEL = { to_follow_up: 'To follow up', followed_up: 'Followed up', 
 
 let ui;
 let notionUi = { connected: false, workspace: '', sources: [], selected: '', busy: false, message: '' };
+let navigationReady = false;
+let currentNavigationKey = null;
+let recordingRequest = 0;
+const navigationSnapshots = new Map();
+const transcriptionRequests = new Map();
+const activeProcesses = new Map();
 window.syncyVoiceDebug = (id, stage, details = {}) => console.info('[VOICE-DEBUG]', id, stage, details);
 function freshUi() {
   let eventId = null;
@@ -388,16 +410,105 @@ const ICONS = {
 };
 
 // ---------- navigation ----------
-function go(screen) {
+function captureNavigationState(key = currentNavigationKey || history.state?.key || crypto.randomUUID()) {
+  return JSON.parse(JSON.stringify({
+    syncy: true, key, screen: ui.screen, tab: ui.tab,
+    scrollTop: document.getElementById('screen')?.scrollTop || 0,
+    eventId: ui.eventId, pickId: ui.pickId, eventForm: ui.eventForm,
+    contactId: ui.contactId, draft: ui.draft, from: ui.from,
+    noteMode: ui.noteMode, noteText: ui.noteText,
+    rec: { status: ui.rec.status === 'recording' ? 'transcribing' : ui.rec.status, secs: ui.rec.secs, words: ui.rec.words },
+    justScanned: ui.justScanned, projForm: ui.projForm,
+    evConfirm: ui.evConfirm, editUrl: ui.editUrl, error: ui.error,
+    fields: [...document.querySelectorAll('#screen input, #screen textarea, #screen select')].map(el => ({
+      id: el.id, value: el.value, checked: 'checked' in el ? el.checked : undefined,
+    })),
+  }));
+}
+
+function saveNavigationState() {
+  if (!navigationReady || !currentNavigationKey) return;
+  const snapshot = captureNavigationState(currentNavigationKey);
+  navigationSnapshots.set(snapshot.key, snapshot);
+  if (history.state?.key === snapshot.key) history.replaceState({ syncy: true, key: snapshot.key, screen: snapshot.screen, tab: snapshot.tab, scrollTop: snapshot.scrollTop }, '', location.href);
+}
+
+function stopNoteRecordingForNavigation(nextScreen, leavingEntry = false) {
+  if (ui.screen !== 'note' || (!leavingEntry && nextScreen === 'note')) return;
+  recordingRequest++;
+  if (ui.rec.status === 'recording' && ui.rec.recorder?.state === 'recording') {
+    ui.rec.status = 'transcribing';
+    clearInterval(ui.rec.timer);
+    ui.rec.recorder.stop();
+  }
+}
+
+function go(screen, force = false) {
+  if (!force && ['today', 'contacts', 'projects'].includes(screen) && ui.screen === screen && ui.tab === screen) {
+    document.getElementById('screen').scrollTop = 0;
+    return;
+  }
+  stopNoteRecordingForNavigation(screen);
   if (ui.screen === 'scan' && screen !== 'scan') stopCameraScan();
+  saveNavigationState();
   clearTimers();
   if (['today', 'contacts', 'projects'].includes(screen)) ui.tab = screen;
   ui.screen = screen;
+  if (navigationReady) {
+    const snapshot = captureNavigationState(crypto.randomUUID());
+    navigationSnapshots.set(snapshot.key, snapshot);
+    history.pushState({ syncy: true, key: snapshot.key, screen: snapshot.screen, tab: snapshot.tab, scrollTop: snapshot.scrollTop }, '', location.href);
+    currentNavigationKey = snapshot.key;
+  }
   render();
   document.getElementById('screen').scrollTop = 0;
+  saveNavigationState();
+}
+
+function restoreNavigationState(snapshot) {
+  if (snapshot && ['note', 'processing', 'review', 'saved', 'detail'].includes(snapshot.screen) && !db.get('contacts', snapshot.contactId)) {
+    snapshot = { ...snapshot, screen: ['today', 'contacts', 'projects'].includes(snapshot.tab) ? snapshot.tab : 'today', contactId: null, draft: null };
+  }
+  if (!snapshot || !['today', 'contacts', 'projects', 'scan', 'note', 'processing', 'review', 'saved', 'detail'].includes(snapshot.screen)) return;
+  currentNavigationKey = snapshot.key || history.state?.key || crypto.randomUUID();
+  if (ui.screen === 'scan' && snapshot.screen !== 'scan') stopCameraScan();
+  clearTimers();
+  Object.assign(ui, {
+    screen: snapshot.screen,
+    tab: ['today', 'contacts', 'projects'].includes(snapshot.tab) ? snapshot.tab : 'today',
+    eventId: snapshot.eventId || null, pickId: snapshot.pickId || null, eventForm: snapshot.eventForm || null,
+    contactId: snapshot.contactId || null, draft: snapshot.draft || null, from: snapshot.from || null,
+    noteMode: snapshot.noteMode || 'text', noteText: snapshot.noteText || '',
+    rec: snapshot.rec || { status: 'idle', secs: 0, words: 0 },
+    justScanned: snapshot.justScanned || null, projForm: snapshot.projForm || null,
+    evConfirm: snapshot.evConfirm || null, editUrl: Boolean(snapshot.editUrl), error: snapshot.error || null,
+  });
+  setActiveEvent(ui.eventId);
+  render();
+  const fields = [...document.querySelectorAll('#screen input, #screen textarea, #screen select')];
+  (snapshot.fields || []).forEach((field, index) => {
+    const input = field.id ? document.getElementById(field.id) : fields[index];
+    if (!input) return;
+    input.value = field.value;
+    if (field.checked !== undefined) input.checked = field.checked;
+  });
+  document.getElementById('screen').scrollTop = snapshot.scrollTop || 0;
+  saveNavigationState();
+}
+
+function replaceCurrentScreen(screen) {
+  if (ui.screen === 'scan' && screen !== 'scan') stopCameraScan();
+  clearTimers();
+  ui.screen = screen;
+  render();
+  document.getElementById('screen').scrollTop = 0;
+  saveNavigationState();
 }
 
 function render() {
+  if (['note', 'processing', 'review', 'saved', 'detail'].includes(ui.screen) && !db.get('contacts', ui.contactId || ui.draft?.id)) {
+    ui.screen = ui.tab; ui.contactId = null; ui.draft = null;
+  }
   const el = document.getElementById('screen');
   const flow = ['scan', 'note', 'processing', 'review', 'saved', 'detail'].includes(ui.screen);
   el.className = 'screen' + (ui.screen === 'scan' ? ' dark' : '');
@@ -405,7 +516,7 @@ function render() {
   const tb = document.getElementById('tabbar');
   tb.style.display = flow ? 'none' : 'flex';
   tb.innerHTML = [['today', 'Today'], ['contacts', 'Contacts'], ['projects', 'Projects']]
-    .map(([id, label]) => `<button class="${ui.tab === id ? 'on' : ''}" onclick="go('${id}')">${ICONS[id]}${label}</button>`).join('')
+    .map(([id, label]) => `<button type="button" class="${ui.tab === id ? 'on' : ''}" aria-current="${ui.tab === id ? 'page' : 'false'}" onclick="go('${id}')">${ICONS[id]}${label}</button>`).join('')
     + `<a href="dashboard.html">${ICONS.dash}Dashboard</a>`;
   const sideKey = ui.screen === 'today' && !ui.eventId ? 'picker' : ui.screen;
   document.querySelectorAll('#sideSteps li').forEach(li => li.classList.toggle('on', li.dataset.s === sideKey));
@@ -463,10 +574,10 @@ const SCREENS = {
       ${projects().map(p => {
         if (ui.projForm === p.id) return projectFormHtml(p);
         const list = all.filter(c => c.project_id === p.id);
-        return `<div class="card proj-card">
+        return `<div class="card proj-card display">
           <div class="ph">${projThumb(p)}<span style="flex:1;min-width:0">${esc(p.name)}</span>
-            <button class="icon-btn" style="width:30px;height:30px;font-size:13px" title="Edit project" onclick="ui.projForm='${p.id}';render()">✎</button>
-            <button class="icon-btn" style="width:30px;height:30px;font-size:13px;color:#b42318" title="Delete project" onclick="deleteProject('${p.id}')">🗑</button></div>
+            <span class="proj-actions"><button class="proj-action" type="button" aria-label="Edit ${esc(p.name)}" title="Edit project" onclick="ui.projForm='${p.id}';render()"><svg viewBox="0 0 24 24"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5"/></svg></button>
+            <button class="proj-action delete" type="button" aria-label="Delete ${esc(p.name)}" title="Delete project" onclick="deleteProject('${p.id}')"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></button></span></div>
           <div class="goal">${esc(p.description)}</div>
           <div class="faces">${list.length ? list.map(c => `<span class="pill grey">${esc(c.name)}</span>`).join('') : '<span class="muted small">No contacts yet</span>'}</div>
         </div>`;
@@ -510,13 +621,17 @@ const SCREENS = {
 
   note() {
     const c = db.get('contacts', ui.contactId);
+    if (!c) return `<div class="title">Contact unavailable</div><p class="sub">This contact may have been deleted.</p><button class="btn" onclick="go(ui.tab)">Back to contacts</button>`;
     const persona = db.live ? null : personaFor(c.profile_url);
     const r = ui.rec;
     const textMode = ui.noteMode === 'text';
     const voiceDone = r.status === 'done';
     const voiceBusy = r.status === 'transcribing';
+    const modeBusy = voiceBusy || r.status === 'recording';
     const voiceFailed = r.status === 'error';
-    const canProcess = textMode ? ui.noteText.trim().length > 0 : voiceDone && ui.noteText.trim().length > 0;
+    const alreadyProcessed = ['review', 'saved'].includes(c.status);
+    const processPending = c.status === 'processing';
+    const canProcess = !alreadyProcessed && !processPending && (textMode ? ui.noteText.trim().length > 0 : voiceDone && ui.noteText.trim().length > 0);
     return `
       <div class="flowbar"><button class="icon-btn" ${voiceBusy ? 'disabled' : ''} onclick="go('today')">✕</button><span class="step">Note</span><span style="width:36px"></span></div>
       <div class="linkchip">${srcBadge(c.source, c.profile_url)}<code>${esc(c.profile_url)}</code><span class="pill ok">✓ saved</span></div>
@@ -528,8 +643,8 @@ const SCREENS = {
       </div>
       <div class="title" style="margin-top:14px">How did it go with ${esc((c.name || 'them').split(' ')[0])}?</div>
       <div class="seg" role="tablist">
-        <button class="${textMode ? 'on' : ''}" ${voiceBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
-        <button class="${textMode ? '' : 'on'}" ${voiceBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">🎙️ Voice memo</button>
+        <button class="${textMode ? 'on' : ''}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
+        <button class="${textMode ? '' : 'on'}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">🎙️ Voice memo</button>
       </div>
       <div class="prompts"><span>Who are they?</span><span>What do they need?</span><span>What did you agree?</span></div>
       ${textMode ? `
@@ -551,14 +666,16 @@ const SCREENS = {
         ${voiceDone || voiceFailed ? `<button class="linkbtn" style="margin-top:6px" onclick="rerecord()">↺ Record again</button>` : ''}`}
       <div class="row" style="margin-top:16px">
         <button class="btn" style="flex:0 0 auto" ${voiceBusy ? 'disabled' : ''} onclick="go('today')">Later</button>
-        <button class="btn btn-primary" id="procBtn" ${canProcess ? '' : 'disabled'} onclick="processNote()">✨ Process</button>
+        <button class="btn btn-primary" id="procBtn" ${canProcess || alreadyProcessed ? '' : 'disabled'} onclick="${alreadyProcessed ? `openContact('${c.id}')` : 'processNote()'}">${processPending ? 'Processing…' : alreadyProcessed ? (c.status === 'saved' ? 'View contact' : 'View insights') : '✨ Process'}</button>
       </div>
       <p class="muted small" style="margin-top:8px">“Later” keeps ${esc((c.name || 'the contact').split(' ')[0])} on your list with a “Needs a note” badge.</p>`;
   },
 
   processing() {
     const c = db.get('contacts', ui.contactId);
+    if (!c) return `<div class="proc"><div class="title">Contact unavailable</div><p class="sub">This contact may have been deleted.</p><button class="btn" onclick="go(ui.tab)">Back to contacts</button></div>`;
     if (c.status === 'error') return `<div class="proc"><div class="title">Processing stopped</div><p class="sub">${esc(ui.error || 'Your note is still available. Try again.')}</p><button class="btn btn-primary" onclick="runLiveProcess()">Retry</button><button class="btn" onclick="go('note')">Back to note</button></div>`;
+    if (c.status === 'review') return `<div class="proc"><div class="title">Your note is ready</div><p class="sub">The summary and project match are ready to review.</p><button class="btn btn-primary" onclick="replaceCurrentScreen('review')">Continue to review</button></div>`;
     return `
       <div class="proc">
         <div class="orb"></div>
@@ -609,6 +726,7 @@ const SCREENS = {
 
   saved() {
     const c = db.get('contacts', ui.contactId);
+    if (!c) return `<div class="title">Contact unavailable</div><p class="sub">This contact may have been deleted.</p><button class="btn" onclick="go(ui.tab)">Back to contacts</button>`;
     const p = proj(c.project_id);
     return `
       <div class="success"><div class="check">✓</div>
@@ -625,6 +743,7 @@ const SCREENS = {
 
   detail() {
     const c = db.get('contacts', ui.contactId);
+    if (!c) return `<div class="title">Contact unavailable</div><p class="sub">This contact may have been deleted.</p><button class="btn" onclick="go(ui.tab)">Back to contacts</button>`;
     const p = proj(c.project_id), ev = event(c.event_id);
     return `
       <div class="flowbar"><button class="icon-btn" onclick="go(ui.tab)">‹</button><span class="step">${ev ? esc(ev.name) : ''}</span><span><button class="btn btn-sm" onclick="editContact()">Edit</button> <button class="btn btn-sm" style="color:#b42318" onclick="deleteCurrentContact()">Delete</button></span></div>
@@ -665,12 +784,12 @@ function eventPicker() {
     <div class="top"><div class="brand"><span class="logo"></span>Syncy</div><button class="linkbtn" style="color:var(--muted)" onclick="signOut()">Sign out</button></div>
     <div class="title">Where are you networking?</div>
     <p class="sub">Pick the event or create a new one. Everyone you scan is filed under it.</p>
-    ${events.map(e => ui.eventForm === e.id ? eventFormHtml(e) : `<div class="ev-option ${ui.pickId === e.id ? 'on' : ''}" role="button" tabindex="0" onclick="ui.pickId='${e.id}';ui.eventForm=null;render()" onkeydown="if(event.key==='Enter'){ui.pickId='${e.id}';ui.eventForm=null;render()}">
-      <span class="radio"></span>
+    ${events.map(e => ui.eventForm === e.id ? eventFormHtml(e) : `<div class="ev-option ${ui.pickId === e.id ? 'on' : ''}">
+      <button type="button" class="ev-select" aria-pressed="${ui.pickId === e.id}" onclick="ui.pickId='${e.id}';ui.eventForm=null;render()"><span class="radio"></span>
       <span class="meta"><b>${esc(e.name)}${e.starts_on === db.TODAY ? '<span class="today">Today</span>' : ''}</b>
       <span class="muted small">${esc(e.location || '')}${e.location ? ' · ' : ''}${fmtDate(e.starts_on)} · ${counts[e.id] || 0} people</span>
-      ${e.url ? `<span class="ev-link">🔗 ${esc(urlHost(e.url))}</span>` : ''}</span>
-      <button class="ev-del" title="Removes the event from this list only — it stays in your dashboard with all its contacts" onclick="event.stopPropagation();ui.evConfirm='${e.id}';render()">✕</button></div>
+      ${e.url ? `<span class="ev-link">🔗 ${esc(urlHost(e.url))}</span>` : ''}</span></button>
+      <button type="button" class="ev-del" aria-label="Remove ${esc(e.name)} from the event picker" title="Removes the event from this list only — it stays in your dashboard with all its contacts" onclick="ui.evConfirm='${e.id}';render()">✕</button></div>
       ${ui.evConfirm === e.id ? `<div class="new-event" style="border-style:solid">
         <b>Remove “${esc(e.name)}” from this list?</b>
         <p class="muted small" style="margin:6px 0 10px">This only removes the event from this overview. The event and its contacts with notes stay in your <a class="linkbtn" href="dashboard.html">dashboard</a>.</p>
@@ -717,7 +836,12 @@ function procSteps(c) {
 const AFTER = {
   scan() { if (db.live && !ui.justScanned && window.Html5Qrcode && !ui.scanner) startCameraScan(); },
   processing() {
-    if (db.live) { if (!ui.processing && db.get('contacts', ui.contactId).status !== 'error') runLiveProcess(); return; }
+    if (db.live) {
+      const c = db.get('contacts', ui.contactId);
+      if (c?.status === 'processing') runLiveProcess();
+      else if (c?.status === 'review') { ui.draft = c; ui.from = 'note'; replaceCurrentScreen('review'); }
+      return;
+    }
     const lis = [...document.querySelectorAll('#steps li')];
     lis.forEach((li, i) => {
       later(() => { li.className = 'doing'; }, i * 650);
@@ -775,8 +899,8 @@ function saveEventUrl(remove = false) {
   ui.editUrl = false;
   render();
 }
-function enterEvent() { setActiveEvent(ui.pickId); ui.editUrl = false; go('today'); }
-function leaveEvent() { setActiveEvent(null); ui.editUrl = false; go('today'); }
+function enterEvent() { const id = ui.pickId; ui.editUrl = false; go('today', true); setActiveEvent(id); render(); saveNavigationState(); }
+function leaveEvent() { ui.editUrl = false; go('today', true); setActiveEvent(null); render(); saveNavigationState(); }
 
 // ---------- actions: scan ----------
 function startScan() { ui.justScanned = null; go('scan'); }
@@ -810,10 +934,11 @@ function scanned(raw) {
 // ---------- actions: note ----------
 function openNote(id) {
   ui.contactId = id; ui.noteMode = 'text'; ui.noteText = '';
-  ui.rec = { status: 'idle', secs: 0, words: 0 };
+  ui.audioBlob = null; ui.error = null; ui.rec = { status: 'idle', secs: 0, words: 0 };
   go('note');
 }
 function setNoteMode(mode) {
+  if (ui.rec.status === 'recording' || ui.rec.status === 'transcribing') return;
   clearTimers();
   ui.noteMode = mode;
   if (mode === 'voice' && ui.rec.status !== 'done') ui.rec = { status: 'idle', secs: 0, words: 0 };
@@ -861,57 +986,103 @@ function toggleRec() {
 function recordLive() {
   if (ui.rec.status === 'recording') { window.syncyVoiceDebug(ui.voiceDebugId, 'stop_clicked'); ui.rec.recorder.stop(); clearInterval(ui.rec.timer); return; }
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { alert('Voice recording is not available in this browser. Use a typed note.'); return; }
+  const requestId = ++recordingRequest;
+  const contactId = ui.contactId;
+  const historyKey = history.state?.key;
+  const transcriptionId = (transcriptionRequests.get(contactId) || 0) + 1;
+  transcriptionRequests.set(contactId, transcriptionId);
+  ui.error = null;
   ui.voiceDebugId = crypto.randomUUID();
   ui.audioBlob = null;
   window.syncyVoiceDebug(ui.voiceDebugId, 'microphone_permission_requested');
+  let acquiredStream;
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    acquiredStream = stream;
+    if (requestId !== recordingRequest || ui.screen !== 'note' || ui.contactId !== contactId) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
     const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(type => MediaRecorder.isTypeSupported(type));
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    const debugId = ui.voiceDebugId;
+    const chunks = [];
+    let recordingTimer;
+    let seconds = 0;
     ui.rec = { status: 'recording', secs: 0, recorder };
-    recorder.ondataavailable = event => { if (event.data.size) { ui.audioBlob = event.data; window.syncyVoiceDebug(ui.voiceDebugId, 'audio_data_available', { bytes: event.data.size, mime_type: event.data.type || recorder.mimeType }); } else window.syncyVoiceDebug(ui.voiceDebugId, 'empty_audio_chunk'); };
-    recorder.onerror = event => window.syncyVoiceDebug(ui.voiceDebugId, 'recorder_error', { error: event.error?.name || 'unknown' });
+    recorder.ondataavailable = event => { if (event.data.size) { chunks.push(event.data); window.syncyVoiceDebug(debugId, 'audio_data_available', { bytes: event.data.size, mime_type: event.data.type || recorder.mimeType }); } else window.syncyVoiceDebug(debugId, 'empty_audio_chunk'); };
+    recorder.onerror = event => window.syncyVoiceDebug(debugId, 'recorder_error', { error: event.error?.name || 'unknown' });
     recorder.onstop = () => {
-      stream.getTracks().forEach(track => track.stop()); clearInterval(ui.rec.timer);
-      const blob = ui.audioBlob, debugId = ui.voiceDebugId;
-      ui.rec.status = 'transcribing';
-      window.syncyVoiceDebug(debugId, 'recording_stopped', { seconds: ui.rec.secs, audio_bytes: blob?.size || 0, mime_type: blob?.type || recorder.mimeType });
-      render();
-      transcribeLiveRecording(blob, debugId);
+      stream.getTracks().forEach(track => track.stop()); clearInterval(recordingTimer);
+      const blob = new Blob(chunks, { type: recorder.mimeType || chunks[0]?.type || 'audio/webm' });
+      updateVoiceHistory(historyKey, { status: 'transcribing', secs: seconds });
+      if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) { ui.audioBlob = blob; ui.rec.status = 'transcribing'; render(); saveNavigationState(); }
+      window.syncyVoiceDebug(debugId, 'recording_stopped', { seconds, audio_bytes: blob.size, mime_type: blob.type || recorder.mimeType });
+      transcribeLiveRecording(blob, debugId, contactId, historyKey, seconds, transcriptionId);
     };
-    window.syncyVoiceDebug(ui.voiceDebugId, 'recorder_started', { mime_type: recorder.mimeType || 'browser-default' });
+    window.syncyVoiceDebug(debugId, 'recorder_started', { mime_type: recorder.mimeType || 'browser-default' });
     recorder.start(); render();
-    ui.rec.timer = setInterval(() => {
-      ui.rec.secs++;
-      const timer = document.getElementById('timer'); if (timer) timer.textContent = `0:${String(ui.rec.secs).padStart(2, '0')}`;
-      if (ui.rec.secs >= 60) recorder.stop();
+    recordingTimer = setInterval(() => {
+      seconds++;
+      if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) {
+        ui.rec.secs = seconds;
+        const timer = document.getElementById('timer'); if (timer) timer.textContent = `0:${String(seconds).padStart(2, '0')}`;
+      }
+      if (seconds >= 60) recorder.stop();
     }, 1000);
-  }).catch(error => { window.syncyVoiceDebug(ui.voiceDebugId, 'microphone_failed', { error: error.name || 'unknown', message: error.message }); ui.error = `Microphone unavailable: ${error.message}`; alert(ui.error); });
+    ui.rec.timer = recordingTimer;
+  }).catch(error => {
+    acquiredStream?.getTracks().forEach(track => track.stop());
+    if (requestId !== recordingRequest) return;
+    const message = `Microphone unavailable: ${error.message}`;
+    updateVoiceHistory(historyKey, { status: 'error', secs: 0, error: message });
+    if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) {
+      ui.rec = { status: 'error', secs: 0, words: 0 }; ui.error = message; render(); saveNavigationState();
+    }
+    window.syncyVoiceDebug(ui.voiceDebugId, 'microphone_failed', { error: error.name || 'unknown', message: error.message });
+  });
 }
-async function transcribeLiveRecording(blob, debugId) {
+function updateVoiceHistory(key, update) {
+  const snapshot = key && navigationSnapshots.get(key);
+  if (!snapshot) return;
+  snapshot.rec = { ...snapshot.rec, ...update };
+  if (update.noteText !== undefined) snapshot.noteText = update.noteText;
+  if (update.error !== undefined) snapshot.error = update.error;
+  navigationSnapshots.set(key, snapshot);
+}
+async function transcribeLiveRecording(blob, debugId, contactId, historyKey, seconds, transcriptionId) {
   try {
     if (!blob?.size) throw new Error('No audio data was captured. Record again and speak near the microphone.');
     if (blob.size > 20 * 1024 * 1024) throw new Error('Recording is too large. Record a shorter memo.');
     window.syncyVoiceDebug(debugId, 'transcription_request_started', { audio_bytes: blob.size, mime_type: blob.type });
     const transcript = (await db.transcribeAudio(blob, debugId)).trim();
     if (!transcript) throw new Error('Whisper returned an empty transcript. Record again and speak near the microphone.');
-    ui.noteText = transcript;
-    ui.audioBlob = null;
-    ui.rec.status = 'done';
-    ui.error = null;
+    if (transcriptionRequests.get(contactId) !== transcriptionId) return;
+    updateVoiceHistory(historyKey, { status: 'done', secs: seconds, noteText: transcript, error: null });
+    if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) { ui.noteText = transcript; ui.audioBlob = null; ui.rec = { status: 'done', secs: seconds, words: 0 }; ui.error = null; }
     window.syncyVoiceDebug(debugId, 'transcription_succeeded', { transcript_chars: transcript.length });
-    render();
+    if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) render();
   } catch (error) {
-    ui.audioBlob = null;
-    ui.rec.status = 'error';
-    ui.error = error.message || String(error);
-    window.syncyVoiceDebug(debugId, 'transcription_failed', { message: ui.error });
-    render();
+    if (transcriptionRequests.get(contactId) !== transcriptionId) return;
+    const message = error.message || String(error);
+    updateVoiceHistory(historyKey, { status: 'error', secs: seconds, error: message });
+    if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) { ui.audioBlob = null; ui.rec = { status: 'error', secs: seconds, words: 0 }; ui.error = message; }
+    window.syncyVoiceDebug(debugId, 'transcription_failed', { message });
+    if (ui.screen === 'note' && ui.contactId === contactId && history.state?.key === historyKey) render();
   }
 }
 function stopRec(script) { clearTimers(); ui.rec.status = 'done'; ui.noteText = script; render(); }
-function rerecord() { clearTimers(); clearInterval(ui.rec.timer); ui.audioBlob = null; ui.error = null; ui.rec = { status: 'idle', secs: 0, words: 0 }; ui.noteText = ''; render(); }
+function rerecord() {
+  clearTimers(); clearInterval(ui.rec.timer);
+  transcriptionRequests.set(ui.contactId, (transcriptionRequests.get(ui.contactId) || 0) + 1);
+  updateVoiceHistory(history.state?.key, { status: 'idle', secs: 0, noteText: '', error: null });
+  ui.audioBlob = null; ui.error = null; ui.rec = { status: 'idle', secs: 0, words: 0 }; ui.noteText = ''; render(); saveNavigationState();
+}
 function processNote() {
   const id = ui.contactId;
+  const existing = db.get('contacts', id);
+  if (!existing) { go(ui.tab); return; }
+  if (['review', 'saved'].includes(existing.status)) { openContact(id); return; }
+  if (existing.status === 'processing') { go('processing'); return; }
   const voice = ui.noteMode === 'voice';
   if (!ui.voiceDebugId) ui.voiceDebugId = crypto.randomUUID();
   window.syncyVoiceDebug(ui.voiceDebugId, 'process_clicked', { note_kind: voice ? 'voice' : 'text', audio_bytes: ui.audioBlob?.size || 0 });
@@ -925,18 +1096,25 @@ function processNote() {
   go('processing');
 }
 async function runLiveProcess() {
-  if (ui.processing) return;
-  ui.processing = true;
+  const c = db.get('contacts', ui.contactId);
+  if (!c || activeProcesses.has(c.id)) return;
+  const contactId = c.id, historyKey = history.state?.key, debugId = ui.voiceDebugId || (ui.voiceDebugId = crypto.randomUUID());
+  const requestId = crypto.randomUUID();
+  activeProcesses.set(contactId, requestId);
   try {
-    const c = db.get('contacts', ui.contactId);
-    window.syncyVoiceDebug(ui.voiceDebugId, 'edge_function_call_started');
-    const updated = await db.process(c.id, ui.voiceDebugId);
-    window.syncyVoiceDebug(ui.voiceDebugId, 'edge_function_call_succeeded', { status: updated?.status || 'unknown', transcript_chars: updated?.note_text?.length || 0 });
-    ui.draft = updated; ui.from = 'note'; ui.processing = false; go('review');
+    window.syncyVoiceDebug(debugId, 'edge_function_call_started');
+    const updated = await db.process(contactId, debugId);
+    if (activeProcesses.get(contactId) === requestId) activeProcesses.delete(contactId);
+    window.syncyVoiceDebug(debugId, 'edge_function_call_succeeded', { status: updated?.status || 'unknown', transcript_chars: updated?.note_text?.length || 0 });
+    if (ui.contactId === contactId && ui.screen === 'processing' && history.state?.key === historyKey) {
+      ui.draft = updated; ui.from = 'note'; replaceCurrentScreen('review');
+    }
   } catch (error) {
-    window.syncyVoiceDebug(ui.voiceDebugId, 'client_pipeline_failed', { message: error.message || String(error) });
-    ui.processing = false; ui.error = error.message || String(error);
-    db.update('contacts', ui.contactId, { status: 'error' }); render();
+    if (activeProcesses.get(contactId) === requestId) activeProcesses.delete(contactId);
+    const message = error.message || String(error);
+    window.syncyVoiceDebug(debugId, 'client_pipeline_failed', { message });
+    db.update('contacts', contactId, { status: 'error' });
+    if (ui.contactId === contactId && ui.screen === 'processing' && history.state?.key === historyKey) { ui.error = message; render(); saveNavigationState(); }
   }
 }
 
@@ -1132,6 +1310,18 @@ function copyText(btn, text) {
 window.addEventListener('db-change', () => { if (!['note', 'processing', 'review'].includes(ui.screen)) render(); });
 window.addEventListener('db-error', e => alert(`Could not sync with Supabase: ${e.detail}`));
 window.addEventListener('auth-change', () => location.replace('login.html?next=index.html'));
+window.addEventListener('popstate', event => {
+  stopNoteRecordingForNavigation(event.state?.screen, true);
+  if (ui.screen === 'scan' && event.state?.screen !== 'scan') stopCameraScan();
+  clearTimers();
+  const previous = currentNavigationKey && captureNavigationState(currentNavigationKey);
+  if (previous) navigationSnapshots.set(previous.key, previous);
+  if (!event.state?.syncy) return;
+  restoreNavigationState(navigationSnapshots.get(event.state.key) || event.state);
+});
+document.addEventListener('input', saveNavigationState);
+document.addEventListener('change', saveNavigationState);
+document.addEventListener('click', saveNavigationState);
 async function signOut() { try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
 ui = freshUi();
 db.init().then(authenticated => {
@@ -1140,8 +1330,15 @@ db.init().then(authenticated => {
   document.getElementById('sideNote').textContent = 'Contacts, events, projects, and transcripts belong to your account. Voice audio is transcribed without being stored.';
   ui = freshUi();
   const params = new URLSearchParams(location.search);
-  if (params.get('tab') === 'projects') { ui.tab = 'projects'; ui.screen = 'projects'; }
+  const initialTab = params.get('tab');
+  if (['today', 'contacts', 'projects'].includes(initialTab)) { ui.tab = initialTab; ui.screen = initialTab; }
   if (params.get('notion') === 'connected') notionUi.message = 'Notion connected. Choose the database that contains your projects.';
+  const initialNavigation = captureNavigationState(crypto.randomUUID());
+  currentNavigationKey = initialNavigation.key;
+  navigationSnapshots.set(initialNavigation.key, initialNavigation);
+  history.replaceState({ syncy: true, key: initialNavigation.key, screen: ui.screen, tab: ui.tab, scrollTop: 0 }, '', location.href);
+  navigationReady = true;
+  render();
   refreshNotionStatus().then(() => render());
 }).catch(error => {
   document.getElementById('sideNote').textContent = error.message || 'Check the Supabase URL and public key, then reload.';
