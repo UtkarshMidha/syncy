@@ -272,7 +272,13 @@ ul.bul li { margin: 3px 0; }
 .proj-action { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; }
 .proj-action svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .proj-action.delete { color: #b42318; }
-.faces { display: flex; gap: 6px; flex-wrap: wrap; }
+.faces { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.proj-card.display { cursor: pointer; }
+.proj-card .faces { gap: 0; }
+.face { width: 28px; height: 28px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-size: 12.5px; font-weight: 700; border: 2px solid #fff; }
+.face + .face { margin-left: -8px; }
+.face-more { background: var(--line); color: var(--muted); font-size: 11px; }
+.dropzone.flash { outline: 2px solid var(--accent-2); outline-offset: 3px; }
 details.card > summary { min-height: 44px; display: flex; align-items: center; }
 @media (max-width: 760px) {
   input, textarea, select { font-size: 16px; }
@@ -604,12 +610,15 @@ const SCREENS = {
       ${projects().map(p => {
         if (ui.projForm === p.id) return projectFormHtml(p);
         const list = all.filter(c => c.project_id === p.id);
-        return `<div class="card proj-card display">
+        return `<div class="card proj-card display" role="button" tabindex="0" aria-label="${esc(p.name)}: ${list.length} ${list.length === 1 ? 'contact' : 'contacts'}, show them"
+          onclick="if(!event.target.closest('.proj-action'))openProjectContacts('${p.id}')" onkeydown="if(event.key==='Enter'&&!event.target.closest('.proj-action'))openProjectContacts('${p.id}')">
           <div class="ph">${projThumb(p)}<span style="flex:1;min-width:0">${esc(p.name)}</span>
             <span class="proj-actions"><button class="proj-action" type="button" aria-label="Edit ${esc(p.name)}" title="Edit project" onclick="ui.projForm='${p.id}';render()"><svg viewBox="0 0 24 24"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5"/></svg></button>
             <button class="proj-action delete" type="button" aria-label="Delete ${esc(p.name)}" title="Delete project" onclick="deleteProject('${p.id}')"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></button></span></div>
           <div class="goal">${esc(p.description)}</div>
-          <div class="faces">${list.length ? list.map(c => `<span class="pill grey">${esc(c.name)}</span>`).join('') : '<span class="muted small">No contacts yet</span>'}</div>
+          <div class="faces">${list.length
+            ? `${list.slice(0, 3).map(c => `<span class="face" style="background:${color(c.name)}">${esc((String(c.name || '?').trim()[0] || '?').toUpperCase())}</span>`).join('')}${list.length > 3 ? `<span class="face face-more">+${list.length - 3}</span>` : ''}<span class="muted small" style="margin-left:10px">${list.length} ${list.length === 1 ? 'contact' : 'contacts'}</span>`
+            : '<span class="muted small">No contacts yet</span>'}</div>
         </div>`;
       }).join('')}
       <details class="card" ${projects().length ? '' : 'open'}>
@@ -881,6 +890,19 @@ function animateLiveSteps() {
   paint();
 }
 const AFTER = {
+  contacts() {
+    if (!ui.focusProject) return;
+    const pid = ui.focusProject;
+    ui.focusProject = null;
+    // Next tick: go() resets the screen's scrollTop right after render.
+    later(() => {
+      const zone = document.querySelector(`.dropzone[data-pid="${pid}"]`);
+      if (!zone || ui.screen !== 'contacts') return;
+      zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      zone.classList.add('flash');
+      setTimeout(() => zone.classList.remove('flash'), 1600);
+    }, 0);
+  },
   scan() { if (db.live && !ui.justScanned && window.Html5Qrcode && !ui.scanner) startCameraScan(); },
   processing() {
     if (db.live) {
@@ -978,6 +1000,9 @@ function scanned(raw) {
   render();
   later(() => openNote(row.id), 1600);
 }
+
+// A project card opens the Contacts tab scrolled to that project's group.
+function openProjectContacts(id) { ui.focusProject = id; go('contacts'); }
 
 // ---------- actions: contacts tab (assign to projects) ----------
 function toggleSelectMode() { ui.sel = Array.isArray(ui.sel) ? null : []; render(); }

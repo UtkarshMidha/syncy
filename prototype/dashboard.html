@@ -152,7 +152,10 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .linkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; background: #f6f1ea; border-radius: 10px; padding: 8px 10px; }
 .linkrow code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .copy { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
-.saved-note { position: sticky; bottom: 0; font-size: 12.5px; color: var(--ok); min-height: 18px; margin-top: 10px; }
+.savebar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; margin-top: 18px; padding: 12px 0 4px; background: var(--panel); border-top: 1px solid var(--line); }
+.savebar .state { margin-right: auto; font-size: 12.5px; color: var(--muted); }
+.savebar .state.ok { color: var(--ok); }
+.savebar .btn:disabled { opacity: .45; cursor: default; }
 .notekind { font-size: 12px; color: var(--muted); }
 .meta-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12.5px; color: var(--muted); }
 .meta-grid code { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -305,6 +308,7 @@ const state = {
   q: '', project: 'all', event: 'all', due: 'all', status: 'all', source: 'all',
   stages: new Set(STAGES.map(s => s.id)),
   sort: 'due', openId: null, statFilter: null,
+  draft: {}, // unsaved edits for the open contact; written to the db only on Save
 };
 
 // ---------- data ----------
@@ -455,11 +459,12 @@ function renderDrawer() {
   document.getElementById('scrim').classList.toggle('show', !!c);
   dr.classList.toggle('show', !!c);
   if (!c) return;
+  const d = { ...c, ...state.draft };
   const e = event(c.event_id);
-  const input = (field, ph = '—') => `<input class="edit" value="${esc(c[field])}" placeholder="${ph}" onchange="update('${field}', this.value)">`;
+  const input = (field, ph = '—') => `<input class="edit" value="${esc(d[field])}" placeholder="${ph}" onchange="edit('${field}', this.value)">`;
   dr.innerHTML = `
-    <div class="dhead">${avatar(c.name)}
-      <div style="min-width:0;flex:1"><input class="title" value="${esc(c.name)}" aria-label="Name" onchange="update('name', this.value)">
+    <div class="dhead">${avatar(d.name)}
+      <div style="min-width:0;flex:1"><input class="title" value="${esc(d.name)}" aria-label="Name" onchange="edit('name', this.value)">
         <div class="prole">${esc(SOURCE_LABEL[c.source])} · met at ${esc(e?.name || 'no event')}${e ? ' · ' + fmt(e.starts_on) : ''}</div>
         ${e?.url ? `<a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(urlHost(e.url))} ↗</a>` : ''}</div>
       <button class="x" onclick="closeDrawer()" aria-label="Close">✕</button></div>
@@ -467,37 +472,37 @@ function renderDrawer() {
       ${needsNote(c) ? `<div class="box" style="margin-top:14px;background:var(--accent-soft);border-color:transparent">✍️ Scanned but no note yet. Add one in the <a href="index.html">phone app</a>, or fill the fields here.</div>` : ''}
 
       <div class="label">Stage</div>
-      <div class="seg">${STAGES.map(s => `<button class="${c.stage === s.id ? 'st-' + s.id : ''}" aria-pressed="${c.stage === s.id}" onclick="update('stage','${s.id}')">${s.label}</button>`).join('')}</div>
+      <div class="seg">${STAGES.map(s => `<button class="${d.stage === s.id ? 'st-' + s.id : ''}" aria-pressed="${d.stage === s.id}" onclick="edit('stage','${s.id}')">${s.label}</button>`).join('')}</div>
 
       <div class="half" style="margin-top:4px">
         <div><div class="label">Role</div>${input('role')}</div>
         <div><div class="label">Company</div>${input('company')}</div>
       </div>
 
-      <div class="label">Project ${c.project_set_by === 'ai' ? '<span class="ai">✨ suggested by AI</span>' : c.project_set_by === 'user' ? '<span class="ai" style="color:var(--muted)">set by you</span>' : ''}</div>
+      <div class="label">Project ${d.project_set_by === 'ai' ? '<span class="ai">✨ suggested by AI</span>' : d.project_set_by === 'user' ? '<span class="ai" style="color:var(--muted)">set by you</span>' : ''}</div>
       <div class="match">
         <select class="edit" onchange="assignProject(this.value)">
-          ${projects().map(p => `<option value="${p.id}" ${p.id === c.project_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-          <option value="" ${!c.project_id ? 'selected' : ''}>No project</option>
+          ${projects().map(p => `<option value="${p.id}" ${p.id === d.project_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+          <option value="" ${!d.project_id ? 'selected' : ''}>No project</option>
         </select>
-        ${c.match_reason ? `<div class="reason">${esc(c.match_reason)}</div>` : ''}
+        ${d.match_reason ? `<div class="reason">${esc(d.match_reason)}</div>` : ''}
       </div>
 
       <div class="label">Summary <span class="ai">✨ AI, editable</span></div>
-      <textarea class="edit" rows="2" onchange="update('summary', this.value)">${esc(c.summary)}</textarea>
+      <textarea class="edit" rows="2" onchange="edit('summary', this.value)">${esc(d.summary)}</textarea>
 
       <div class="label">What you talked about <span class="ai" style="color:var(--muted)">one per line, max 3</span></div>
-      <textarea class="edit" rows="3" onchange="update('discussed', this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3))">${esc((c.discussed || []).join('\n'))}</textarea>
+      <textarea class="edit" rows="3" onchange="edit('discussed', this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3))">${esc((d.discussed || []).join('\n'))}</textarea>
 
       <div class="label">Next step</div>
       <div class="two">${input('next_step')}
-        <input class="edit" type="date" value="${c.next_step_date || ''}" onchange="update('next_step_date', this.value || null)" aria-label="Due date"></div>
+        <input class="edit" type="date" value="${d.next_step_date || ''}" onchange="edit('next_step_date', this.value || null)" aria-label="Due date"></div>
 
       <div class="label">Follow-up draft <button class="copy" onclick="copyDraft(this)">Copy</button></div>
-      <textarea class="edit" rows="4" onchange="update('follow_up_draft', this.value)">${esc(c.follow_up_draft)}</textarea>
+      <textarea class="edit" rows="4" onchange="edit('follow_up_draft', this.value)">${esc(d.follow_up_draft)}</textarea>
 
       <div class="label">Your notes</div>
-      <textarea class="edit" rows="3" placeholder="Anything to remember…" onchange="update('user_notes', this.value)">${esc(c.user_notes)}</textarea>
+      <textarea class="edit" rows="3" placeholder="Anything to remember…" onchange="edit('user_notes', this.value)">${esc(d.user_notes)}</textarea>
 
       ${c.note_text ? `<div class="label">Original note <span class="notekind">${c.note_kind === 'voice' ? '🎙️ voice memo transcript' : '✍️ typed'}</span></div><div class="box" style="font-size:13.5px">${esc(c.note_text)}</div>` : ''}
 
@@ -506,7 +511,11 @@ function renderDrawer() {
       <div class="label">Row</div>
       <div class="meta-grid"><span>status</span><code>${esc(c.status)}</code><span>profile_slug</span><code>${esc(c.profile_slug)}</code><span>scanned_at</span><code>${esc(c.scanned_at)}</code><span>updated_at</span><code>${esc(c.updated_at)}</code></div>
       <button class="btn" style="margin-top:12px;color:#b42318" onclick="deleteContact('${c.id}', this)">Delete contact</button>
-      <div class="saved-note" id="savedNote"></div>
+      <div class="savebar">
+        <span class="state" id="saveState">${dirty() ? 'Unsaved changes' : ''}</span>
+        <button class="btn" id="discardBtn" onclick="discardDraft()" ${dirty() ? '' : 'disabled'}>Discard</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveDraft()" ${dirty() ? '' : 'disabled'}>Save changes</button>
+      </div>
     </div>`;
 }
 
@@ -542,8 +551,15 @@ function toggleStage(id) {
   renderAll();
 }
 function setSort(key) { state.sort = key; renderAll(); }
-function openDrawer(id) { state.openId = id; renderRows(); renderDrawer(); }
-function closeDrawer() { state.openId = null; renderRows(); renderDrawer(); }
+function openDrawer(id) {
+  if (id !== state.openId && dirty() && !confirm('Discard unsaved changes to this contact?')) return;
+  if (id !== state.openId) state.draft = {};
+  state.openId = id; renderRows(); renderDrawer();
+}
+function closeDrawer() {
+  if (dirty() && !confirm('Discard unsaved changes?')) return;
+  state.draft = {}; state.openId = null; renderRows(); renderDrawer();
+}
 
 async function deleteContact(id, button) {
   const contact = db.get('contacts', id);
@@ -560,26 +576,38 @@ async function deleteContact(id, button) {
   }
 }
 
-// Same write as the phone app: one PATCH on the contacts row.
-function update(field, value) {
-  const patch = { [field]: value === '' ? null : value };
-  db.update('contacts', state.openId, patch);
-  renderStats(); renderFilters(); renderRows();
+// Edits collect in state.draft; nothing is written until the user presses Save.
+const dirty = () => Object.keys(state.draft).length > 0;
+function markDirty() {
+  const note = document.getElementById('saveState');
+  if (note) note.textContent = dirty() ? 'Unsaved changes' : '';
+  for (const id of ['saveBtn', 'discardBtn']) { const b = document.getElementById(id); if (b) b.disabled = !dirty(); }
+}
+function edit(field, value) {
+  state.draft[field] = value === '' ? null : value;
   // Text edits keep the drawer as is, so tabbing to the next field keeps focus.
-  if (field === 'stage' || field === 'project_id') renderDrawer();
-  const note = document.getElementById('savedNote');
-  if (note) note.textContent = 'Saved ✓';
+  if (field === 'stage') renderDrawer(); else markDirty();
 }
 function assignProject(id) {
   const p = id && db.get('projects', id);
-  db.update('contacts', state.openId, {
+  Object.assign(state.draft, {
     project_id: id || null, project_set_by: 'user', match_confidence: null,
     match_reason: p ? `Assigned by you to “${p.name}”.` : 'Not linked to a project.',
   });
-  update('project_id', id || null);
+  renderDrawer();
 }
+// One PATCH on the contacts row, same shape as the phone app writes.
+function saveDraft() {
+  if (!state.openId || !dirty()) return;
+  db.update('contacts', state.openId, state.draft);
+  state.draft = {};
+  renderAll();
+  const note = document.getElementById('saveState');
+  if (note) { note.textContent = 'Saved ✓'; note.classList.add('ok'); }
+}
+function discardDraft() { state.draft = {}; renderDrawer(); }
 function copyDraft(btn) {
-  navigator.clipboard?.writeText(db.get('contacts', state.openId).follow_up_draft || '').catch(() => {});
+  navigator.clipboard?.writeText(state.draft.follow_up_draft ?? db.get('contacts', state.openId).follow_up_draft ?? '').catch(() => {});
   btn.textContent = 'Copied ✓';
   setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
