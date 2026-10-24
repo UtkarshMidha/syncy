@@ -250,7 +250,7 @@ ul.bul li { margin: 3px 0; }
 .phase2 .n-logo { width: 20px; height: 20px; border: 1.5px solid #999; border-radius: 4px; font-size: 11px; font-weight: 800; display: grid; place-items: center; color: #999; flex: none; }
 
 /* ---------- projects ---------- */
-.proj-card { margin-bottom: 10px; }
+.proj-card, .projects-import { margin-bottom: 10px; }
 .proj-card.display { padding: 12px; }
 .proj-card .ph { display: flex; gap: 8px; align-items: center; font-weight: 700; }
 .proj-card .ph > span:nth-child(2) { overflow-wrap: anywhere; }
@@ -563,7 +563,7 @@ const SCREENS = {
     return `
       <div class="title">Your projects</div>
       <p class="sub small">The AI compares every new contact with these descriptions. Imported Notion projects are copied into Syncy and work like your other projects.</p>
-      <div class="card">
+      <div class="card projects-import">
         <div style="font-weight:700">Import projects from Notion</div>
         <p class="muted small">Connect a workspace, choose a shared projects database, and copy its projects into Syncy.</p>
         ${notionUi.connected ? `<div class="muted small" style="margin-bottom:10px">Connected${notionUi.workspace ? ` to ${esc(notionUi.workspace)}` : ''} · Notion access stays private to your account</div>
