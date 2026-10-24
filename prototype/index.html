@@ -809,7 +809,7 @@ function eventHome() {
   const list = eventContacts(ev.id);
   const pending = list.filter(c => c.status === 'captured').length;
   return `
-    <div class="top"><div class="brand"><span class="logo"></span>Syncy</div><span style="display:flex;gap:8px"><a class="icon-btn" href="dashboard.html" title="Dashboard" style="text-decoration:none">▦</a><button class="icon-btn" title="Sign out" onclick="signOut()">⏻</button></span></div>
+    <div class="top"><div class="brand"><span class="logo"></span>Syncy</div><span style="display:flex;gap:8px"><a class="icon-btn" href="dashboard.html" title="Dashboard" style="text-decoration:none">▦</a><button class="icon-btn" type="button" aria-label="Sign out" title="Sign out" onclick="signOut()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v8"/><path d="M18.36 6.64a9 9 0 1 1-12.72 0"/></svg></button></span></div>
     <div class="event"><span class="dot"></span><div style="min-width:0">You're at <b>${esc(ev.name)}</b><br><small>${esc(ev.location || '')}${ev.location ? ' · ' : ''}${fmtDate(ev.starts_on)}</small>
       ${ev.url && !ui.editUrl
         ? `<div class="ev-url"><a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(urlHost(ev.url))} ↗</a><button onclick="ui.editUrl=true;render()">Edit</button></div>`
