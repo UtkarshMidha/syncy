@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syncy contacts</title>
+<!--
+  Contacts dashboard. Reads and writes the same rows as the phone app through data.js,
+  which requires an authenticated Supabase session.
+-->
+<style>
+:root {
+  --bg: #f3efe9;
+  --panel: #fffdf9;
+  --ink: #1f1b17;
+  --muted: #71695f;
+  --line: #ebe3d8;
+  --card: #ffffff;
+  --accent: #e4602a;
+  --accent-ink: #a8431a;
+  --accent-2: #f3a33f;
+  --accent-soft: #fdede3;
+  --ok: #2c8a57;
+  --ok-soft: #e4f3ea;
+  --blue: #2f6db5;
+  --blue-soft: #e6eef8;
+  --purple: #7a4bc0;
+  --purple-soft: #efe8f9;
+  --grey-soft: #f1ebe3;
+  --danger: #c2372b;
+  --linkedin: #0a66c2;
+  --xing: #026466;
+  --shadow: 0 1px 2px rgba(40, 28, 16, .06), 0 6px 18px rgba(40, 28, 16, .07);
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14.5px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+
+/* ---------- sidebar ---------- */
+.side { background: #1f1b17; color: #efe6db; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; margin: 0 8px 22px; color: #fff; }
+.logo { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd27a, var(--accent-2) 45%, var(--accent) 100%); box-shadow: 0 0 14px rgba(243, 163, 63, .6); }
+.nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: #cbbfb1; text-decoration: none; text-align: left; }
+.nav:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.nav.on { background: rgba(255, 255, 255, .1); color: #fff; font-weight: 600; }
+.nav .count { margin-left: auto; font-size: 12px; color: #a99c8d; }
+.side .spacer { flex: 1; }
+.store-status { font-size: 12.5px; color: #bfb3a6; border: 1px solid rgba(255, 255, 255, .12); border-radius: 12px; padding: 10px 12px; }
+.store-status b { color: #fff; }
+.store-status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5be38f; margin-right: 6px; }
+.store-status .p2 { display: block; margin-top: 6px; color: #8f8478; }
+
+/* ---------- main ---------- */
+.main { padding: 26px 32px 60px; min-width: 0; }
+.demo-banner { display: inline-block; font-size: 12px; color: var(--muted); background: #f8f3ec; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; margin-bottom: 10px; }
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.head h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+.head p { margin: 4px 0 0; color: var(--muted); }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-weight: 600; background: var(--grey-soft); text-decoration: none; color: var(--ink); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .28); }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 12px; margin: 20px 0 18px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; text-align: left; box-shadow: var(--shadow); transition: transform .12s, border-color .12s; }
+button.stat:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+.stat.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
+.stat .num { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.stat .lbl { color: var(--muted); font-size: 13px; }
+.stat.warn .num { color: var(--danger); }
+.bars { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; }
+.bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12.5px; align-items: center; }
+.bar .track { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--grey-soft); overflow: hidden; }
+.bar .fill { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+/* ---------- toolbar ---------- */
+.toolbar { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; box-shadow: var(--shadow); }
+.search { flex: 1 1 240px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; }
+.search input { border: 0; outline: 0; padding: 9px 0; width: 100%; background: transparent; }
+.search:focus-within { outline: 2px solid var(--accent-2); border-color: transparent; }
+select.f { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #fff; max-width: 210px; }
+select.f:focus { outline: 2px solid var(--accent-2); border-color: transparent; }
+select.f.set { border-color: var(--accent); background: var(--accent-soft); }
+.stages { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; align-items: center; }
+.stages .lbl { font-size: 12.5px; color: var(--muted); margin-right: 2px; }
+.chipbtn { font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
+.chipbtn.on { border-color: transparent; }
+.clear { font-size: 13px; color: var(--accent-ink); font-weight: 600; margin-left: auto; }
+.resultline { display: flex; justify-content: space-between; align-items: center; margin: 14px 2px 8px; color: var(--muted); font-size: 13px; }
+
+/* ---------- table ---------- */
+.table { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.thead, .row { display: grid; grid-template-columns: minmax(200px, 2.1fr) minmax(220px, 3fr) minmax(120px, 1.2fr) minmax(170px, 1.7fr) minmax(110px, 1fr) minmax(110px, 1fr); gap: 14px; align-items: center; padding: 12px 16px; }
+.thead { background: #faf6f0; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.thead button { text-transform: inherit; letter-spacing: inherit; font-weight: inherit; color: inherit; text-align: left; display: inline-flex; gap: 4px; align-items: center; }
+.thead button.on { color: var(--ink); }
+.row { border-bottom: 1px solid var(--line); cursor: pointer; transition: background .1s; }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: #fffaf3; }
+.row:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
+.row.open { background: var(--accent-soft); }
+.person { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
+.pname { font-weight: 650; display: flex; align-items: center; gap: 6px; }
+.prole { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary { font-size: 13.5px; color: #3f3933; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.src { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; color: #fff; font-size: 10px; font-weight: 800; flex: none; }
+.src.li { background: var(--linkedin); }
+.src.xi { background: var(--xing); }
+.src.ot { background: #6f675f; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--grey-soft); color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pill.need-note { background: var(--accent-soft); color: var(--accent-ink); }
+.proj-cell .pill { white-space: normal; line-height: 1.3; }
+.next { font-size: 13px; }
+.next .due { display: block; font-size: 12.5px; color: var(--muted); }
+.next .due.overdue { color: var(--danger); font-weight: 600; }
+.next .due.soon { color: var(--accent-ink); font-weight: 600; }
+.met { font-size: 12.5px; color: var(--muted); }
+.met b { color: var(--ink); font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evlink { color: var(--accent-ink); font-size: 12.5px; text-decoration: none; }
+.evlink:hover { text-decoration: underline; }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+.st-to_follow_up { background: var(--accent-soft); color: var(--accent-ink); }
+.st-followed_up { background: var(--blue-soft); color: var(--blue); }
+.st-meeting_set { background: var(--purple-soft); color: var(--purple); }
+.st-won { background: var(--ok-soft); color: var(--ok); }
+.st-not_relevant { background: var(--grey-soft); color: var(--muted); }
+
+/* ---------- drawer ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(31, 27, 23, .28); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+.scrim.show { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--panel); box-shadow: -10px 0 40px rgba(0, 0, 0, .15); transform: translateX(100%); transition: transform .22s ease; z-index: 21; display: flex; flex-direction: column; }
+.drawer.show { transform: none; }
+.dhead { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: flex-start; }
+.dhead .avatar { width: 52px; height: 52px; font-size: 18px; }
+.dhead .x { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--grey-soft); flex: none; font-size: 16px; }
+.dhead input.title { font-size: 20px; font-weight: 700; letter-spacing: -.01em; border: 1px solid transparent; border-radius: 8px; padding: 2px 6px; margin-left: -6px; width: 100%; background: transparent; }
+.dhead input.title:hover, .dhead input.title:focus { border-color: var(--line); background: #fff; outline: 0; }
+.dbody { padding: 6px 20px 30px; overflow-y: auto; flex: 1; }
+.label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; display: flex; justify-content: space-between; align-items: center; }
+.label .ai { text-transform: none; letter-spacing: 0; color: var(--accent); font-weight: 600; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.match { border: 1.5px solid var(--accent-2); background: linear-gradient(180deg, #fff8ef, #fff); border-radius: 12px; padding: 12px 14px; }
+.match .reason { margin-top: 8px; font-size: 13.5px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); }
+.seg button:not([aria-pressed="true"]) { background: #fff; color: var(--muted); }
+.seg button[aria-pressed="true"] { border-color: transparent; }
+.edit { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; background: #fff; resize: vertical; }
+.edit:focus { outline: 2px solid var(--accent-2); border-color: transparent; }
+.two { display: grid; grid-template-columns: 1fr 150px; gap: 8px; }
+.half { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.linkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; background: #f6f1ea; border-radius: 10px; padding: 8px 10px; }
+.linkrow code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copy { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
+.saved-note { position: sticky; bottom: 0; font-size: 12.5px; color: var(--ok); min-height: 18px; margin-top: 10px; }
+.notekind { font-size: 12px; color: var(--muted); }
+.meta-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12.5px; color: var(--muted); }
+.meta-grid code { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1180px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats .projects { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .main { padding: 18px 16px 50px; }
+  .thead { display: none; }
+  .row { grid-template-columns: 1fr auto; gap: 8px 12px; }
+  .row .summary, .row .next, .row .met { grid-column: 1 / -1; }
+  .row .proj-cell { grid-column: 1; }
+  .row .stage-cell { grid-column: 2; grid-row: 1; }
+  select.f { max-width: 100%; min-width: 0; flex: 1 1 140px; }
+  .toolbar { position: static; }
+}
+</style>
+</head>
+<body>
+<div class="app" style="visibility:hidden">
+  <aside class="side">
+    <div class="brand"><span class="logo"></span>Syncy</div>
+    <a class="nav on" href="#">👥 Contacts <span class="count" id="navCount"></span></a>
+    <a class="nav" href="index.html">📱 Phone app</a>
+    <div class="spacer"></div>
+    <div class="store-status"><span class="dot"></span><b>Stored in Syncy</b> (Supabase)<span class="p2">Notion / notes-app sync: Phase 2</span></div>
+  </aside>
+
+  <main class="main">
+    <span class="demo-banner">Connecting to your Supabase workspace…</span>
+    <div class="head">
+      <div>
+        <h1>Contacts</h1>
+        <p id="subline"></p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="index.html">＋ Scan a new contact</a><button class="btn" onclick="signOut()">Sign out</button></div>
+    </div>
+
+    <section class="stats" id="stats" aria-label="Summary"></section>
+
+    <div class="toolbar" role="search">
+      <label class="search"><span aria-hidden="true">🔎</span><input id="q" type="search" placeholder="Search name, company, notes, what they need…" autocomplete="off"></label>
+      <select class="f" id="fProject" aria-label="Filter by project"></select>
+      <select class="f" id="fEvent" aria-label="Filter by event"></select>
+      <select class="f" id="fDue" aria-label="Filter by due date">
+        <option value="all">Any follow-up date</option>
+        <option value="overdue">Overdue</option>
+        <option value="week">Due in the next 7 days</option>
+        <option value="later">Due later</option>
+        <option value="none">No date</option>
+      </select>
+      <select class="f" id="fStatus" aria-label="Filter by capture status">
+        <option value="all">Any capture status</option>
+        <option value="saved">Saved</option>
+        <option value="captured">Needs a note</option>
+        <option value="review">Waiting for review</option>
+      </select>
+      <select class="f" id="fSource" aria-label="Filter by source">
+        <option value="all">All sources</option>
+        <option value="qr_linkedin">LinkedIn</option>
+        <option value="qr_xing">Xing</option>
+        <option value="qr_other">Other link</option>
+      </select>
+      <select class="f" id="sortSel" aria-label="Sort">
+        <option value="due">Sort: next follow-up</option>
+        <option value="met">Sort: recently met</option>
+        <option value="name">Sort: name A–Z</option>
+        <option value="project">Sort: project</option>
+        <option value="stage">Sort: stage</option>
+      </select>
+      <div class="stages" id="stageChips"></div>
+    </div>
+
+    <div class="resultline"><span id="resultCount"></span><button class="clear" id="clearBtn" onclick="clearFilters()">Clear filters</button></div>
+
+    <div class="table" role="table" aria-label="Contacts">
+      <div class="thead" role="row" id="thead"></div>
+      <div id="rows"></div>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-label="Contact details"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script>
+const STAGES = [
+  { id: 'to_follow_up', label: 'To follow up' },
+  { id: 'followed_up', label: 'Followed up' },
+  { id: 'meeting_set', label: 'Meeting set' },
+  { id: 'won', label: 'Won' },
+  { id: 'not_relevant', label: 'Not relevant' },
+];
+const SOURCE_LABEL = { qr_linkedin: 'LinkedIn', qr_xing: 'Xing', qr_other: 'Profile link', manual: 'Manual' };
+const COLORS = ['#e4602a', '#2c8a57', '#0a66c2', '#7a4bc0', '#c2410c', '#0f766e', '#a8431a', '#2f6db5'];
+
+const state = {
+  q: '', project: 'all', event: 'all', due: 'all', status: 'all', source: 'all',
+  stages: new Set(STAGES.map(s => s.id)),
+  sort: 'due', openId: null, statFilter: null,
+};
+
+// ---------- data ----------
+const contacts = () => db.list('contacts');
+const projects = () => db.list('projects').filter(p => !p.archived);
+const events = () => db.list('events').sort((a, b) => b.starts_on.localeCompare(a.starts_on));
+const proj = id => id && db.get('projects', id);
+const event = id => id && db.get('events', id);
+
+// ---------- helpers ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stage = id => STAGES.find(s => s.id === id);
+function initials(n) { return (n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+function color(n) { let h = 0; for (const c of n || '?') h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
+const avatar = n => `<span class="avatar" style="background:${color(n)}">${esc(initials(n))}</span>`;
+function srcBadge(s) {
+  if (s === 'qr_xing') return '<span class="src xi" title="Xing">X</span>';
+  if (s === 'qr_linkedin') return '<span class="src li" title="LinkedIn">in</span>';
+  return '<span class="src ot" title="Profile link">↗</span>';
+}
+function days(iso) { return Math.round((Date.parse(iso) - Date.parse(db.TODAY)) / 86400000); }
+function fmt(iso) { return new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); }
+const isOpen = c => c.stage === 'to_follow_up' || c.stage === 'followed_up';
+const isOverdue = c => c.next_step_date && days(c.next_step_date) < 0 && isOpen(c);
+const isThisWeek = c => c.next_step_date && days(c.next_step_date) >= 0 && days(c.next_step_date) <= 7 && c.stage !== 'won' && c.stage !== 'not_relevant';
+const needsNote = c => c.status === 'captured';
+
+function dueLabel(c) {
+  if (!c.next_step_date) return '<span class="due">No date</span>';
+  const d = days(c.next_step_date);
+  if (isOverdue(c)) return `<span class="due overdue">Overdue · ${fmt(c.next_step_date)}</span>`;
+  if (d === 0) return `<span class="due soon">Today</span>`;
+  if (d === 1) return `<span class="due soon">Tomorrow</span>`;
+  if (isThisWeek(c)) return `<span class="due soon">${fmt(c.next_step_date)} · in ${d} days</span>`;
+  return `<span class="due">${fmt(c.next_step_date)}</span>`;
+}
+
+// ---------- filtering & sorting ----------
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  return contacts().filter(c => {
+    if (q && ![c.name, c.role, c.company, c.summary, c.needs, c.next_step, c.note_text, c.user_notes, c.profile_url].join(' ').toLowerCase().includes(q)) return false;
+    if (state.project !== 'all' && (state.project === 'none' ? c.project_id : c.project_id !== state.project)) return false;
+    if (state.event !== 'all' && c.event_id !== state.event) return false;
+    if (state.source !== 'all' && c.source !== state.source) return false;
+    if (state.status !== 'all' && c.status !== state.status) return false;
+    if (!state.stages.has(c.stage)) return false;
+    if (state.due === 'overdue' && !isOverdue(c)) return false;
+    if (state.due === 'week' && !isThisWeek(c)) return false;
+    if (state.due === 'later' && !(c.next_step_date && days(c.next_step_date) > 7)) return false;
+    if (state.due === 'none' && c.next_step_date) return false;
+    return true;
+  }).sort(SORTS[state.sort]);
+}
+
+const stageRank = id => STAGES.findIndex(s => s.id === id);
+const projName = c => proj(c.project_id)?.name || '~';
+const SORTS = {
+  // Contacts that still need a note first, then open follow-ups by date, undated after, closed ones last.
+  due: (a, b) => (needsNote(b) - needsNote(a)) || (isOpen(b) - isOpen(a)) || ((a.next_step_date ? 0 : 1) - (b.next_step_date ? 0 : 1)) || String(a.next_step_date).localeCompare(String(b.next_step_date)),
+  met: (a, b) => b.scanned_at.localeCompare(a.scanned_at),
+  name: (a, b) => (a.name || '').localeCompare(b.name || ''),
+  project: (a, b) => projName(a).localeCompare(projName(b)) || (a.name || '').localeCompare(b.name || ''),
+  stage: (a, b) => stageRank(a.stage) - stageRank(b.stage) || (a.name || '').localeCompare(b.name || ''),
+};
+
+// ---------- rendering ----------
+function renderStats() {
+  const all = contacts();
+  const overdue = all.filter(isOverdue).length;
+  const week = all.filter(isThisWeek).length;
+  const pending = all.filter(needsNote).length;
+  const max = Math.max(1, ...projects().map(p => all.filter(c => c.project_id === p.id).length));
+  const statBtn = (key, num, lbl, cls = '') =>
+    `<button class="stat ${cls} ${state.statFilter === key ? 'active' : ''}" onclick="statClick('${key}')"><div class="num">${num}</div><div class="lbl">${lbl}</div></button>`;
+  document.getElementById('stats').innerHTML =
+    statBtn('all', all.length, `contacts from ${events().length} events`) +
+    statBtn('week', week, 'follow-ups due in the next 7 days') +
+    statBtn('overdue', overdue, 'overdue follow-ups', overdue ? 'warn' : '') +
+    statBtn('pending', pending, 'scanned, still need a note') +
+    `<div class="stat projects"><div class="lbl">Contacts per project</div><div class="bars">${projects().map(p => {
+      const n = all.filter(c => c.project_id === p.id).length;
+      return `<div class="bar"><span>${p.emoji || '📌'} ${esc(p.name)}</span><b>${n}</b><span class="track"><span class="fill" style="width:${n / max * 100}%"></span></span></div>`;
+    }).join('')}</div></div>`;
+  document.getElementById('navCount').textContent = all.length;
+  document.getElementById('subline').textContent = `${all.filter(c => isOpen(c) && !needsNote(c)).length} open follow-ups · ${pending} waiting for a note`;
+}
+
+function renderFilters() {
+  const all = contacts();
+  const fp = document.getElementById('fProject');
+  fp.innerHTML = `<option value="all">All projects</option>` +
+    projects().map(p => `<option value="${p.id}">${p.emoji || ''} ${esc(p.name)} (${all.filter(c => c.project_id === p.id).length})</option>`).join('') +
+    `<option value="none">No project (${all.filter(c => !c.project_id).length})</option>`;
+  const fe = document.getElementById('fEvent');
+  fe.innerHTML = `<option value="all">All events</option>` +
+    events().map(e => `<option value="${e.id}">${esc(e.name)} · ${fmt(e.starts_on)}</option>`).join('');
+  if (![...fp.options].some(o => o.value === state.project)) state.project = 'all';
+  if (![...fe.options].some(o => o.value === state.event)) state.event = 'all';
+  fp.value = state.project; fe.value = state.event;
+  document.getElementById('fDue').value = state.due;
+  document.getElementById('fStatus').value = state.status;
+  document.getElementById('fSource').value = state.source;
+  document.getElementById('sortSel').value = state.sort;
+  ['fProject', 'fEvent', 'fDue', 'fStatus', 'fSource'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.toggle('set', el.value !== 'all');
+  });
+  document.getElementById('stageChips').innerHTML = `<span class="lbl">Stage:</span>` + STAGES.map(s => {
+    const on = state.stages.has(s.id);
+    const n = all.filter(c => c.stage === s.id).length;
+    return `<button class="chipbtn ${on ? 'on st-' + s.id : ''}" aria-pressed="${on}" onclick="toggleStage('${s.id}')">${on ? '✓ ' : ''}${s.label} · ${n}</button>`;
+  }).join('');
+}
+
+const COLS = [['name', 'Person'], [null, 'Summary'], ['project', 'Project'], ['due', 'Next step'], ['stage', 'Stage'], ['met', 'Met at']];
+function renderRows() {
+  document.getElementById('thead').innerHTML = COLS.map(([key, label]) => key
+    ? `<button class="${state.sort === key ? 'on' : ''}" onclick="setSort('${key}')">${label}${state.sort === key ? ' ↓' : ''}</button>`
+    : `<span>${label}</span>`).join('');
+  const list = filtered();
+  const total = contacts().length;
+  document.getElementById('resultCount').textContent = list.length === total ? `Showing all ${total} contacts` : `Showing ${list.length} of ${total} contacts`;
+  document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden';
+  document.getElementById('rows').innerHTML = list.length ? list.map(c => {
+    const p = proj(c.project_id), s = stage(c.stage), e = event(c.event_id);
+    const who = [c.role, c.company].filter(Boolean).join(' · ') || c.profile_url;
+    return `<div class="row ${state.openId === c.id ? 'open' : ''}" role="row" tabindex="0" onclick="openDrawer('${c.id}')" onkeydown="if(event.key==='Enter')openDrawer('${c.id}')">
+      <div class="person">${avatar(c.name)}<div style="min-width:0"><div class="pname">${esc(c.name || c.profile_slug)} ${srcBadge(c.source)}</div><div class="prole">${esc(who)}</div></div></div>
+      <div class="summary">${needsNote(c) ? '<span class="pill need-note">✍️ Scanned, needs a note</span>' : esc(c.summary)}</div>
+      <div class="proj-cell">${p ? `<span class="pill" title="${esc(p.name)}">${p.emoji || ''} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill">No project</span>'}</div>
+      <div class="next">${esc(c.next_step || '—')}${dueLabel(c)}</div>
+      <div class="stage-cell"><span class="pill st-${s.id}">${s.label}</span></div>
+      <div class="met"><b>${esc(e?.name || 'No event')}</b>${e ? fmt(e.starts_on) : ''}${e?.url ? ` · <a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Event page: ${esc(urlHost(e.url))}" aria-label="Event page">🔗</a>` : ''}</div>
+    </div>`;
+  }).join('') : `<div class="empty">No contacts match these filters. <button class="clear" onclick="clearFilters()">Clear filters</button></div>`;
+}
+
+function renderDrawer() {
+  const dr = document.getElementById('drawer');
+  const c = state.openId && db.get('contacts', state.openId);
+  document.getElementById('scrim').classList.toggle('show', !!c);
+  dr.classList.toggle('show', !!c);
+  if (!c) return;
+  const e = event(c.event_id);
+  const input = (field, ph = '—') => `<input class="edit" value="${esc(c[field])}" placeholder="${ph}" onchange="update('${field}', this.value)">`;
+  dr.innerHTML = `
+    <div class="dhead">${avatar(c.name)}
+      <div style="min-width:0;flex:1"><input class="title" value="${esc(c.name)}" aria-label="Name" onchange="update('name', this.value)">
+        <div class="prole">${esc(SOURCE_LABEL[c.source])} · met at ${esc(e?.name || 'no event')}${e ? ' · ' + fmt(e.starts_on) : ''}</div>
+        ${e?.url ? `<a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(urlHost(e.url))} ↗</a>` : ''}</div>
+      <button class="x" onclick="closeDrawer()" aria-label="Close">✕</button></div>
+    <div class="dbody">
+      ${needsNote(c) ? `<div class="box" style="margin-top:14px;background:var(--accent-soft);border-color:transparent">✍️ Scanned but no note yet. Add one in the <a href="index.html">phone app</a>, or fill the fields here.</div>` : ''}
+
+      <div class="label">Stage</div>
+      <div class="seg">${STAGES.map(s => `<button class="${c.stage === s.id ? 'st-' + s.id : ''}" aria-pressed="${c.stage === s.id}" onclick="update('stage','${s.id}')">${s.label}</button>`).join('')}</div>
+
+      <div class="half" style="margin-top:4px">
+        <div><div class="label">Role</div>${input('role')}</div>
+        <div><div class="label">Company</div>${input('company')}</div>
+      </div>
+
+      <div class="label">Project ${c.project_set_by === 'ai' ? '<span class="ai">✨ suggested by AI</span>' : c.project_set_by === 'user' ? '<span class="ai" style="color:var(--muted)">set by you</span>' : ''}</div>
+      <div class="match">
+        <select class="edit" onchange="assignProject(this.value)">
+          ${projects().map(p => `<option value="${p.id}" ${p.id === c.project_id ? 'selected' : ''}>${p.emoji || ''} ${esc(p.name)}</option>`).join('')}
+          <option value="" ${!c.project_id ? 'selected' : ''}>No project</option>
+        </select>
+        ${c.match_reason ? `<div class="reason">${esc(c.match_reason)}</div>` : ''}
+      </div>
+
+      <div class="label">Summary <span class="ai">✨ AI, editable</span></div>
+      <textarea class="edit" rows="2" onchange="update('summary', this.value)">${esc(c.summary)}</textarea>
+
+      <div class="label">What you talked about <span class="ai" style="color:var(--muted)">one per line, max 3</span></div>
+      <textarea class="edit" rows="3" onchange="update('discussed', this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3))">${esc((c.discussed || []).join('\n'))}</textarea>
+
+      <div class="label">What they need</div>
+      ${input('needs')}
+
+      <div class="label">Next step</div>
+      <div class="two">${input('next_step')}
+        <input class="edit" type="date" value="${c.next_step_date || ''}" onchange="update('next_step_date', this.value || null)" aria-label="Due date"></div>
+
+      <div class="label">Follow-up draft <button class="copy" onclick="copyDraft(this)">Copy</button></div>
+      <textarea class="edit" rows="4" onchange="update('follow_up_draft', this.value)">${esc(c.follow_up_draft)}</textarea>
+
+      <div class="label">Your notes</div>
+      <textarea class="edit" rows="3" placeholder="Anything to remember…" onchange="update('user_notes', this.value)">${esc(c.user_notes)}</textarea>
+
+      ${c.note_text ? `<div class="label">Original note <span class="notekind">${c.note_kind === 'voice' ? '🎙️ voice memo transcript' : '✍️ typed'}</span></div><div class="box" style="font-size:13.5px">${esc(c.note_text)}</div>` : ''}
+
+      <div class="label">Profile</div>
+      <div class="linkrow">${srcBadge(c.source)}<code>${esc(c.profile_url)}</code></div>
+      <div class="label">Row</div>
+      <div class="meta-grid"><span>status</span><code>${esc(c.status)}</code><span>profile_slug</span><code>${esc(c.profile_slug)}</code><span>scanned_at</span><code>${esc(c.scanned_at)}</code><span>updated_at</span><code>${esc(c.updated_at)}</code></div>
+      <button class="btn" style="margin-top:12px;color:#b42318" onclick="deleteContact('${c.id}', this)">Delete contact</button>
+      <div class="saved-note" id="savedNote"></div>
+    </div>`;
+}
+
+function renderAll() { renderStats(); renderFilters(); renderRows(); renderDrawer(); }
+
+// ---------- actions ----------
+function isFiltered() {
+  return state.q || state.project !== 'all' || state.event !== 'all' || state.due !== 'all' || state.status !== 'all' || state.source !== 'all' || state.stages.size !== STAGES.length;
+}
+function clearFilters() {
+  Object.assign(state, { q: '', project: 'all', event: 'all', due: 'all', status: 'all', source: 'all', statFilter: null });
+  state.stages = new Set(STAGES.map(s => s.id));
+  document.getElementById('q').value = '';
+  renderAll();
+}
+function statClick(key) {
+  const wasOn = state.statFilter === key;
+  clearFilters();
+  if (wasOn || key === 'all') return;
+  state.statFilter = key;
+  if (key === 'week') { state.due = 'week'; state.sort = 'due'; }
+  if (key === 'overdue') { state.due = 'overdue'; state.sort = 'due'; }
+  if (key === 'pending') state.status = 'captured';
+  renderAll();
+}
+function toggleStage(id) {
+  // First click on a chip while all are on narrows to just that stage.
+  if (state.stages.size === STAGES.length) state.stages = new Set([id]);
+  else if (state.stages.has(id)) state.stages.delete(id);
+  else state.stages.add(id);
+  if (state.stages.size === 0) state.stages = new Set(STAGES.map(s => s.id));
+  state.statFilter = null;
+  renderAll();
+}
+function setSort(key) { state.sort = key; renderAll(); }
+function openDrawer(id) { state.openId = id; renderRows(); renderDrawer(); }
+function closeDrawer() { state.openId = null; renderRows(); renderDrawer(); }
+
+async function deleteContact(id, button) {
+  const contact = db.get('contacts', id);
+  if (!contact || !confirm(`Delete ${contact.name || 'this contact'} and its note and recording? This cannot be undone.`)) return;
+  button.disabled = true; button.textContent = 'Deleting…';
+  try {
+    const result = await db.deleteContact(id);
+    state.openId = null;
+    renderAll();
+    if (!result.audioRemoved) alert('The contact was deleted, but its audio file could not be removed from Storage.');
+  } catch (error) {
+    button.disabled = false; button.textContent = 'Delete contact';
+    alert(`Could not delete contact: ${error.message || error}`);
+  }
+}
+
+// Same write as the phone app: one PATCH on the contacts row.
+function update(field, value) {
+  const patch = { [field]: value === '' ? null : value };
+  db.update('contacts', state.openId, patch);
+  renderStats(); renderFilters(); renderRows();
+  // Text edits keep the drawer as is, so tabbing to the next field keeps focus.
+  if (field === 'stage' || field === 'project_id') renderDrawer();
+  const note = document.getElementById('savedNote');
+  if (note) note.textContent = 'Saved ✓';
+}
+function assignProject(id) {
+  const p = id && db.get('projects', id);
+  db.update('contacts', state.openId, {
+    project_id: id || null, project_set_by: 'user', match_confidence: null,
+    match_reason: p ? `Assigned by you to “${p.name}”.` : 'Not linked to a project.',
+  });
+  update('project_id', id || null);
+}
+function copyDraft(btn) {
+  navigator.clipboard?.writeText(db.get('contacts', state.openId).follow_up_draft || '').catch(() => {});
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+async function signOut() { try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+
+document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; state.statFilter = null; renderRows(); document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden'; });
+[['fProject', 'project'], ['fEvent', 'event'], ['fDue', 'due'], ['fStatus', 'status'], ['fSource', 'source'], ['sortSel', 'sort']].forEach(([id, key]) =>
+  document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; if (key !== 'sort') state.statFilter = null; renderAll(); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.openId) closeDrawer(); });
+// The phone app saved something in another tab.
+window.addEventListener('db-change', () => { if (state.openId && !db.get('contacts', state.openId)) state.openId = null; renderAll(); });
+window.addEventListener('db-error', e => alert(`Could not sync with Supabase: ${e.detail}`));
+window.addEventListener('auth-change', () => location.replace('login.html?next=dashboard.html'));
+db.init().then(authenticated => {
+  if (!authenticated) { location.replace('login.html?next=dashboard.html'); return; }
+  document.querySelector('.app').style.visibility = 'visible';
+  document.querySelector('.demo-banner').textContent = `Private Supabase workspace · ${db.user.email || 'signed in'}`;
+  renderAll();
+}).catch(error => {
+  document.querySelector('.app').innerHTML = '<main class="main"><h1>Could not connect to Supabase</h1><p>Check your configuration and connection, then reload.</p><button class="btn" onclick="location.reload()">Retry</button></main>';
+});
+</script>
+</body>
+</html>

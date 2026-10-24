@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Syncy</title>
+<!--
+  Phase 1 phone flow: choose / create event → scan → note → AI processing → review and save.
+  The app requires an authenticated Supabase session; it does not run in demo mode.
+-->
+<style>
+:root {
+  --bg: #f3efe9;
+  --phone: #fffdf9;
+  --ink: #1f1b17;
+  --muted: #71695f;
+  --line: #ebe3d8;
+  --card: #ffffff;
+  --accent: #e4602a;
+  --accent-2: #f3a33f;
+  --accent-soft: #fdede3;
+  --accent-ink: #a8431a;
+  --ok: #2c8a57;
+  --ok-soft: #e4f3ea;
+  --linkedin: #0a66c2;
+  --xing: #026466;
+  --shadow: 0 1px 2px rgba(40, 28, 16, .06), 0 6px 18px rgba(40, 28, 16, .07);
+  --radius: 16px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 48px;
+  padding: 24px;
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+input, textarea, select { font: inherit; color: inherit; }
+
+/* ---------- desktop side panel ---------- */
+.side { max-width: 300px; }
+.side h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.02em; }
+.side p { color: var(--muted); margin: 0 0 18px; }
+.side ol { padding: 0; margin: 0 0 20px; list-style: none; counter-reset: s; }
+.side li { counter-increment: s; display: flex; gap: 10px; align-items: baseline; padding: 6px 0; color: var(--muted); }
+.side li::before { content: counter(s); width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--line); color: var(--ink); font-size: 12px; font-weight: 600; display: grid; place-items: center; transform: translateY(4px); }
+.side li.on { color: var(--ink); font-weight: 600; }
+.side li.on::before { background: var(--accent); color: #fff; }
+.side .note { font-size: 13px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--muted); }
+.side .links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ---------- phone frame ---------- */
+.phone {
+  width: 390px; height: 844px; max-height: calc(100vh - 48px);
+  background: var(--phone); border-radius: 46px; overflow: hidden;
+  box-shadow: 0 0 0 11px #1f1b17, 0 30px 70px rgba(0, 0, 0, .28);
+  display: flex; flex-direction: column; position: relative;
+}
+@media (max-width: 760px) {
+  body { padding: 0; display: block; }
+  .side { display: none; }
+  .phone { width: 100%; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; }
+}
+.statusbar { height: 44px; flex: none; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 28px 6px; font-size: 14px; font-weight: 600; }
+.app-status { display:flex; align-items:center; gap:8px; margin:0 16px; }
+.demo-banner { flex: 1; margin: 0; font-size: 11.5px; text-align: center; color: var(--muted); background: #f6f1ea; border-radius: 999px; padding: 5px 10px; }
+#signOutButton { border:0; background:none; color:var(--muted); font:inherit; font-size:12px; cursor:pointer; }
+.screen { flex: 1; overflow-y: auto; padding: 14px 18px 24px; scrollbar-width: none; }
+.screen::-webkit-scrollbar { display: none; }
+.screen.dark { background: #15120f; color: #fff; }
+
+/* ---------- tab bar ---------- */
+.tabbar { flex: none; display: flex; border-top: 1px solid var(--line); padding: 8px 8px 22px; background: var(--phone); }
+.tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); padding: 4px 0; }
+.tabbar button.on { color: var(--accent); font-weight: 600; }
+.tabbar svg { width: 24px; height: 24px; }
+
+/* ---------- common ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; }
+.logo { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd27a, var(--accent-2) 45%, var(--accent) 100%); box-shadow: 0 0 14px rgba(243, 163, 63, .6); }
+.title { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 4px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 14px; font-weight: 600; background: #f1ebe3; text-decoration: none; color: var(--ink); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .3); }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+.btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; font-size: 16px; }
+.dark .icon-btn { background: rgba(255, 255, 255, .12); color: #fff; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.grey { background: #f1ebe3; color: var(--muted); }
+.src { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: #fff; font-size: 11px; font-weight: 800; flex: none; }
+.src.li { background: var(--linkedin); }
+.src.xi { background: var(--xing); }
+.src.ot { background: #6f675f; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; }
+.field { display: block; margin-top: 12px; }
+.field > span { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+textarea.edit, input.edit, select.edit { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; resize: vertical; }
+textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid var(--accent-2); border-color: transparent; }
+.row { display: flex; gap: 8px; }
+.row > * { flex: 1; }
+.empty { text-align: center; color: var(--muted); padding: 22px 10px; border: 1.5px dashed var(--line); border-radius: var(--radius); }
+
+/* ---------- event picker ---------- */
+.ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; }
+.ev-option .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+.ev-option.on { border-color: var(--accent); background: #fff8f2; }
+.ev-option.on .radio { border-color: var(--accent); }
+.ev-option.on .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.ev-option .meta { flex: 1; min-width: 0; }
+.ev-option b { display: block; }
+.ev-option .today { font-size: 11px; font-weight: 700; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 7px; border-radius: 999px; margin-left: 6px; }
+.new-event { border: 1.5px dashed var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
+.pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pchip { font-size: 13px; font-weight: 600; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--muted); text-align: left; }
+.pchip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.ev-edit { display: block; margin: -2px 0 10px 46px; font-size: 13px; font-weight: 600; color: var(--accent-ink); }
+.ev-option .ev-link { display: block; font-size: 12px; color: var(--accent-ink); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-url { display: flex; gap: 10px; align-items: center; margin-top: 4px; font-size: 12.5px; }
+.ev-url a { color: #ffd9a0; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-url a:hover { text-decoration: underline; }
+.ev-url button { color: #d9c9b8; font-size: 12.5px; text-decoration: underline; }
+.url-error { color: #c2372b; font-size: 12.5px; min-height: 0; margin-top: 4px; }
+.stick-bottom { position: sticky; bottom: -24px; margin: 16px -18px -24px; padding: 12px 18px 18px; background: linear-gradient(180deg, rgba(255, 253, 249, 0), var(--phone) 30%); }
+
+/* ---------- event home ---------- */
+.event { display: flex; gap: 12px; align-items: center; background: linear-gradient(135deg, #2a221b, #3d2c20); color: #fff; border-radius: var(--radius); padding: 14px; }
+.event .dot { width: 10px; height: 10px; border-radius: 50%; background: #5be38f; box-shadow: 0 0 0 4px rgba(91, 227, 143, .25); flex: none; }
+.event small { color: #d9c9b8; }
+.event .leave { margin-left: auto; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255, 255, 255, .14); padding: 6px 10px; border-radius: 10px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+.stat b { display: block; font-size: 22px; letter-spacing: -.02em; }
+.stat span { font-size: 11.5px; color: var(--muted); line-height: 1.25; display: block; }
+.scan-cta { margin-top: 14px; width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 20px; color: #fff; text-align: left; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 24px rgba(228, 96, 42, .32); }
+.scan-cta svg { width: 40px; height: 40px; flex: none; }
+.scan-cta b { font-size: 17px; display: block; }
+.scan-cta small { opacity: .9; }
+.person { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin-bottom: 8px; width: 100%; text-align: left; }
+.person .meta { flex: 1; min-width: 0; }
+.person .name { font-weight: 650; display: flex; align-items: center; gap: 6px; }
+.person .role { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person .next { font-size: 13px; margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------- scan ---------- */
+.flowbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.flowbar .step { font-size: 13px; color: var(--muted); }
+.dark .flowbar .step { color: #bfb3a6; }
+.viewfinder { position: relative; width: 230px; height: 230px; margin: 10px auto 14px; border-radius: 24px; background: radial-gradient(circle, #2c2620, #15120f 75%); display: grid; place-items: center; overflow: hidden; }
+.viewfinder .corner { position: absolute; width: 38px; height: 38px; border: 4px solid #fff; }
+.viewfinder .tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-radius: 14px 0 0 0; }
+.viewfinder .tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-radius: 0 14px 0 0; }
+.viewfinder .bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-radius: 0 0 0 14px; }
+.viewfinder .br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 14px 0; }
+.viewfinder .line { position: absolute; left: 24px; right: 24px; height: 2px; background: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); animation: scan 2s ease-in-out infinite; }
+@keyframes scan { 0%, 100% { top: 30px; } 50% { top: 198px; } }
+.viewfinder .qr { width: 140px; height: 140px; border-radius: 8px; opacity: .2; filter: blur(2px); transition: all .35s; }
+.viewfinder.hit .qr { opacity: 1; filter: none; }
+.viewfinder.hit .line { display: none; }
+.viewfinder.hit .corner { border-color: #5be38f; }
+.detected { text-align: center; min-height: 54px; font-size: 14px; }
+.detected .ok { color: #5be38f; font-weight: 700; }
+.detected code { font-size: 12.5px; color: #e8dccf; }
+.saved-row { margin: 8px auto 0; max-width: 300px; text-align: left; font-size: 12.5px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; padding: 8px 10px; color: #e8dccf; }
+.saved-row div { display: flex; justify-content: space-between; gap: 10px; }
+.saved-row span { color: #a99c8d; }
+.demo-pick { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); border-radius: var(--radius); padding: 12px; margin-top: 8px; }
+.demo-pick p { margin: 0 0 8px; font-size: 12.5px; color: #bfb3a6; }
+.chip { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 12px; background: rgba(255, 255, 255, .08); color: #fff; margin-top: 6px; text-align: left; }
+.chip:hover:not(:disabled) { background: rgba(255, 255, 255, .16); }
+.chip:disabled { opacity: .4; cursor: default; }
+.chip .avatar { width: 30px; height: 30px; font-size: 12px; }
+.chip small { color: #bfb3a6; display: block; font-size: 12px; }
+.urlrow { display: flex; gap: 6px; margin-top: 8px; }
+.urlrow input { flex: 1; min-width: 0; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .08); color: #fff; padding: 8px 10px; font-size: 13px; }
+.urlrow input::placeholder { color: #8f8478; }
+.urlrow button { border-radius: 10px; background: #fff; color: var(--ink); font-weight: 600; font-size: 13px; padding: 0 12px; }
+
+/* ---------- note ---------- */
+.linkchip { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #f6f1ea; font-size: 13px; }
+.linkchip code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #f1ebe3; padding: 4px; border-radius: 14px; margin: 12px 0 10px; }
+.seg button { padding: 9px 8px; border-radius: 11px; font-weight: 600; color: var(--muted); }
+.seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.prompts { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
+.prompts span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.linkbtn { font-size: 13px; font-weight: 600; color: var(--accent-ink); }
+.mic-wrap { display: flex; flex-direction: column; align-items: center; margin: 10px 0 8px; }
+.mic { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 26px rgba(228, 96, 42, .35); }
+.mic svg { width: 36px; height: 36px; }
+.mic.rec { background: #d93a2b; animation: pulse 1.4s ease-out infinite; }
+.mic.rec .stopicon { width: 28px; height: 28px; border-radius: 6px; background: #fff; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(217, 58, 43, .45); } 100% { box-shadow: 0 0 0 26px rgba(217, 58, 43, 0); } }
+.timer { font-variant-numeric: tabular-nums; font-weight: 600; margin-top: 10px; }
+.wave { display: flex; gap: 3px; align-items: center; height: 34px; margin-top: 6px; }
+.wave i { width: 4px; border-radius: 2px; background: var(--accent); height: 6px; transition: height .12s; }
+.transcript { min-height: 80px; font-size: 14.5px; }
+.transcript .caret { display: inline-block; width: 2px; height: 1em; background: var(--accent); vertical-align: -2px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- processing ---------- */
+.proc { display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
+.orb { width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe2a6, var(--accent-2) 45%, var(--accent) 100%); animation: glow 1.6s ease-in-out infinite alternate; }
+@keyframes glow { from { box-shadow: 0 0 20px rgba(243, 163, 63, .4); transform: scale(.96); } to { box-shadow: 0 0 60px rgba(243, 163, 63, .8); transform: scale(1.04); } }
+.steps { list-style: none; padding: 0; margin: 28px 0 0; width: 100%; }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 10px 4px; color: var(--muted); }
+.steps li .ic { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; font-size: 12px; }
+.steps li.doing { color: var(--ink); font-weight: 600; }
+.steps li.doing .ic { border-color: var(--accent); border-top-color: transparent; animation: spin .8s linear infinite; }
+.steps li.done { color: var(--ink); }
+.steps li.done .ic { background: var(--ok); border-color: var(--ok); color: #fff; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- review / detail ---------- */
+.who { display: flex; gap: 12px; align-items: center; }
+.who .avatar { width: 54px; height: 54px; font-size: 18px; }
+.who .n { font-size: 19px; font-weight: 700; }
+.who .r { color: var(--muted); font-size: 13.5px; }
+.match { border: 1.5px solid var(--accent-2); background: linear-gradient(180deg, #fff8ef, #fff); border-radius: var(--radius); padding: 14px; margin-top: 14px; }
+.match .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.match .reason { font-size: 13.5px; margin-top: 8px; }
+ul.bul { margin: 0; padding-left: 18px; }
+ul.bul li { margin: 3px 0; }
+.footer { position: sticky; bottom: -24px; margin: 18px -18px -24px; padding: 12px 18px 18px; background: linear-gradient(180deg, rgba(255, 253, 249, 0), var(--phone) 30%); }
+.copy { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
+.label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 6px; display: flex; justify-content: space-between; align-items: center; }
+.label .ai { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--accent); }
+
+/* ---------- saved ---------- */
+.success { text-align: center; padding: 16px 0 6px; }
+.success .check { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; margin: 0 auto 10px; font-size: 30px; animation: pop .4s ease-out; }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
+.phase2 { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
+.phase2 .n-logo { width: 20px; height: 20px; border: 1.5px solid #999; border-radius: 4px; font-size: 11px; font-weight: 800; display: grid; place-items: center; color: #999; flex: none; }
+
+/* ---------- projects ---------- */
+.proj-card { margin-bottom: 10px; }
+.proj-card .ph { display: flex; gap: 10px; align-items: center; font-weight: 700; }
+.proj-card .emoji { width: 36px; height: 36px; border-radius: 10px; background: #f6f1ea; display: grid; place-items: center; font-size: 18px; }
+.proj-card .goal { color: var(--muted); font-size: 13.5px; margin: 6px 0 8px; }
+.faces { display: flex; gap: 6px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand" style="margin-bottom:14px"><span class="logo"></span>Syncy</div>
+  <h1>From "who was that?" to a next step.</h1>
+  <p id="sideIntro">Supabase workspace:</p>
+  <ol id="sideSteps">
+    <li data-s="picker">Choose or create the event, then enter it</li>
+    <li data-s="scan">Scan a QR: link + name are saved at once</li>
+    <li data-s="note">Write a note or record a voice memo</li>
+    <li data-s="processing">AI summarises and compares with your projects</li>
+    <li data-s="review">Edit, assign a project, save</li>
+    <li data-s="saved">Manage everything in the dashboard</li>
+  </ol>
+  <div class="note" id="sideNote">Connecting to your private workspace…</div>
+  <div class="links">
+    <a class="btn" href="dashboard.html">Open dashboard →</a>
+  </div>
+</aside>
+
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>●●● ᯤ ▮</span></div>
+  <div class="app-status"><div class="demo-banner" id="modeBanner">Connecting to Supabase…</div><button id="signOutButton" hidden onclick="signOut()">Sign out</button></div>
+  <main class="screen" id="screen"></main>
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="config.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="data.js"></script>
+<script>
+const ACTIVE_KEY = 'syncy-active-event';
+
+// Demo profiles to "scan". Their notes come with a scripted AI result; any other note goes through simulateAI's heuristic.
+const PERSONAS = [
+  {
+    url: 'linkedin.com/in/lena-hoffmann-demo', role: 'Head of Procurement', company: 'Nordlicht Logistics',
+    note: "Lena, head of procurement at Nordlicht Logistics. They're rebuilding their warehouse KPI dashboard and need a React freelancer from January, budget is already approved. She asked me to send a short portfolio, and I said I'd call her next Tuesday.",
+    ai: {
+      summary: 'Rebuilding the warehouse KPI dashboard; budget approved for a React freelancer from January.',
+      discussed: ['Nordlicht is rebuilding its warehouse KPI dashboard', 'Budget for an external developer is approved', 'Start date: January'],
+      needs: 'A React freelancer for the dashboard rebuild, from January.',
+      project_id: 'pr-client', match_confidence: 'high',
+      match_reason: 'Approved budget for exactly the React dashboard work you want for Q1: “need a React freelancer from January, budget is already approved”.',
+      next_step: 'Send portfolio, then call her', next_step_date: '2026-10-27',
+      follow_up_draft: "Hi Lena, great talking at the BCBT hackathon about Nordlicht's warehouse dashboard. As promised, here is my portfolio with two similar KPI dashboards I built in React. Would Tuesday at 10:00 work for a quick call?",
+    },
+  },
+  {
+    url: 'xing.com/profile/Jonas_Weber_demo', role: 'Sales lead (HR software)', company: 'Between jobs',
+    note: "Jonas, he sold HR software to mid-size companies for six years and just left his job. He's looking for an early-stage HR-tech startup to join as a co-founder. We talked about onboarding being a mess everywhere. He wants to see my prototype, coffee next week.",
+    ai: {
+      summary: 'Sold HR software for six years, just left his job, looking to co-found an HR-tech startup.',
+      discussed: ['Six years selling HR software to mid-size companies', 'Just left his job, looking to co-found', 'Agrees onboarding is a common pain'],
+      needs: 'An early-stage HR-tech startup to join as co-founder.',
+      project_id: 'pr-cofounder', match_confidence: 'high',
+      match_reason: 'The sales-minded HR-tech co-founder profile your project is looking for: “looking for an early-stage HR-tech startup to join as a co-founder”.',
+      next_step: 'Coffee + show him the prototype', next_step_date: '2026-10-29',
+      follow_up_draft: "Hi Jonas, really enjoyed our chat about onboarding chaos at the BCBT hackathon. I'd love to show you the prototype. Does coffee on Thursday near Görlitzer Park work for you?",
+    },
+  },
+];
+const personaFor = url => PERSONAS.find(p => parseProfile(p.url).profile_url === url);
+
+const COLORS = ['#e4602a', '#2c8a57', '#0a66c2', '#7a4bc0', '#c2410c', '#0f766e'];
+const STAGE_LABEL = { to_follow_up: 'To follow up', followed_up: 'Followed up', meeting_set: 'Meeting set', won: 'Won', not_relevant: 'Not relevant' };
+
+let ui;
+window.syncyVoiceDebug = (id, stage, details = {}) => console.info('[VOICE-DEBUG]', id, stage, details);
+function freshUi() {
+  let eventId = null;
+  try { eventId = localStorage.getItem(ACTIVE_KEY); } catch (e) { /* no storage: start at the picker */ }
+  if (eventId && !db.get('events', eventId)) eventId = null;
+  return {
+    tab: 'today', screen: 'today', eventId, pickId: null, eventForm: null,
+    contactId: null, draft: null, from: null,
+    noteMode: 'text', noteText: '', rec: { status: 'idle', secs: 0, words: 0 },
+    justScanned: null,
+  };
+}
+function setActiveEvent(id) {
+  ui.eventId = id;
+  try { id ? localStorage.setItem(ACTIVE_KEY, id) : localStorage.removeItem(ACTIVE_KEY); } catch (e) { /* in-memory only */ }
+}
+// ---------- helpers ----------
+let timers = [];
+function later(fn, ms) { const t = setTimeout(fn, ms); timers.push(t); return t; }
+function every(fn, ms) { const t = setInterval(fn, ms); timers.push(t); return t; }
+function clearTimers() { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const projects = () => db.list('projects').filter(p => !p.archived);
+const proj = id => id && db.get('projects', id);
+const event = id => id && db.get('events', id);
+const eventContacts = id => db.list('contacts').filter(c => c.event_id === id).sort((a, b) => b.scanned_at.localeCompare(a.scanned_at));
+function initials(name) { return (name || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+function color(name) { let h = 0; for (const c of name || '?') h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
+function avatar(name, size) {
+  const st = size ? `width:${size}px;height:${size}px;font-size:${Math.round(size * .36)}px;` : '';
+  return `<span class="avatar" style="background:${color(name)};${st}">${esc(initials(name))}</span>`;
+}
+function srcBadge(source) {
+  if (source === 'qr_xing') return '<span class="src xi">X</span>';
+  if (source === 'qr_linkedin') return '<span class="src li">in</span>';
+  return '<span class="src ot">↗</span>';
+}
+const SOURCE_LABEL = { qr_linkedin: 'LinkedIn', qr_xing: 'Xing', qr_other: 'Profile', manual: 'Manual' };
+function fmtDate(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
+function addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function nowIso() { return new Date().toISOString(); }
+
+function qrSvg(seed) {
+  let s = 7; for (const c of seed) s = (s * 31 + c.charCodeAt(0)) >>> 0;
+  const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const inFinder = (x, y) => (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+  const finder = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
+  let cells = '';
+  for (let y = 0; y < 21; y++) for (let x = 0; x < 21; x++) if (!inFinder(x, y) && rnd() < .5) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  return `<svg class="qr" viewBox="-1.5 -1.5 24 24"><rect x="-1.5" y="-1.5" width="24" height="24" fill="#fff"/><g fill="#111">${finder(0, 0)}${finder(14, 0)}${finder(0, 14)}${cells}</g></svg>`;
+}
+
+const ICONS = {
+  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  contacts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>',
+  projects: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>',
+};
+
+// ---------- navigation ----------
+function go(screen) {
+  if (ui.screen === 'scan' && screen !== 'scan') stopCameraScan();
+  clearTimers();
+  if (['today', 'contacts', 'projects'].includes(screen)) ui.tab = screen;
+  ui.screen = screen;
+  render();
+  document.getElementById('screen').scrollTop = 0;
+}
+
+function render() {
+  const el = document.getElementById('screen');
+  const flow = ['scan', 'note', 'processing', 'review', 'saved', 'detail'].includes(ui.screen);
+  el.className = 'screen' + (ui.screen === 'scan' ? ' dark' : '');
+  el.innerHTML = SCREENS[ui.screen]();
+  const tb = document.getElementById('tabbar');
+  tb.style.display = flow ? 'none' : 'flex';
+  tb.innerHTML = [['today', 'Today'], ['contacts', 'Contacts'], ['projects', 'Projects']]
+    .map(([id, label]) => `<button class="${ui.tab === id ? 'on' : ''}" onclick="go('${id}')">${ICONS[id]}${label}</button>`).join('');
+  const sideKey = ui.screen === 'today' && !ui.eventId ? 'picker' : ui.screen;
+  document.querySelectorAll('#sideSteps li').forEach(li => li.classList.toggle('on', li.dataset.s === sideKey));
+  AFTER[ui.screen]?.();
+}
+
+// ---------- screens ----------
+function personRow(c) {
+  const p = proj(c.project_id);
+  const status = c.status === 'captured'
+    ? '<span class="pill">✍️ Needs a note</span>'
+    : `${p ? `<span class="pill grey">${p.emoji} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill grey">No project</span>'}${c.next_step ? `<span class="pill grey">→ ${esc(c.next_step)}${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</span>` : ''}`;
+  return `<button class="card person" onclick="openContact('${c.id}')">
+    ${avatar(c.name)}
+    <div class="meta">
+      <div class="name">${esc(c.name || c.profile_slug)} ${srcBadge(c.source)}</div>
+      <div class="role">${c.role || c.company ? esc([c.role, c.company].filter(Boolean).join(' · ')) : esc(c.profile_url)}</div>
+      <div class="next">${status}</div>
+    </div></button>`;
+}
+
+const SCREENS = {
+  today() {
+    return ui.eventId ? eventHome() : eventPicker();
+  },
+
+  contacts() {
+    const all = db.list('contacts');
+    const groups = projects().map(p => ({ p, list: all.filter(c => c.project_id === p.id) }));
+    const none = all.filter(c => !c.project_id);
+    return `
+      <div class="title">Contacts</div>
+      <p class="sub">All events, grouped by project. Filters and sorting: <a href="dashboard.html" class="linkbtn">dashboard</a>.</p>
+      ${groups.map(g => `<div class="section-title">${g.p.emoji} ${esc(g.p.name)} · ${g.list.length}</div>
+        ${g.list.length ? g.list.map(personRow).join('') : '<div class="empty small">No one yet</div>'}`).join('')}
+      ${none.length ? `<div class="section-title">No project yet · ${none.length}</div>${none.map(personRow).join('')}` : ''}`;
+  },
+
+  projects() {
+    const all = db.list('contacts');
+    return `
+      <div class="title">Your projects</div>
+      <p class="sub small">The AI compares every new contact with these descriptions. Stored in Syncy; importing from Notion or your notes app comes in Phase 2.</p>
+      ${projects().map(p => {
+        const list = all.filter(c => c.project_id === p.id);
+        return `<div class="card proj-card">
+          <div class="ph"><span class="emoji">${p.emoji || '📌'}</span>${esc(p.name)}</div>
+          <div class="goal">${esc(p.description)}</div>
+          <div class="faces">${list.length ? list.map(c => `<span class="pill grey">${esc(c.name)}</span>`).join('') : '<span class="muted small">No contacts yet</span>'}</div>
+        </div>`;
+      }).join('')}
+      <details class="card" ${projects().length ? '' : 'open'}>
+        <summary style="font-weight:600;cursor:pointer">＋ Add a project</summary>
+        <label class="field"><span>Name</span><input class="edit" id="pName" placeholder="e.g. Find a UX designer partner"></label>
+        <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pDesc" rows="3" placeholder="One or two sentences. The AI matches contacts against this."></textarea></label>
+        <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="addProject()">Add project</button>
+      </details>`;
+  },
+
+  scan() {
+    const ev = event(ui.eventId);
+    const hit = ui.justScanned && db.get('contacts', ui.justScanned);
+    return `
+      <div class="flowbar"><button class="icon-btn" onclick="go('today')">✕</button><span class="step">${esc(ev.name)} · Scan</span><span style="width:36px"></span></div>
+      ${db.live && !hit ? '<div id="qr-reader" style="width:100%;margin:14px 0;border-radius:16px;overflow:hidden"></div>' : ''}
+      <div class="viewfinder ${hit ? 'hit' : ''}" ${db.live ? 'style="display:none"' : ''}>
+        ${qrSvg(hit ? hit.profile_url : 'placeholder')}
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <span class="line"></span>
+      </div>
+      <div class="detected">${hit
+        ? `<div class="ok">✓ ${SOURCE_LABEL[hit.source]} profile saved</div>
+           <div class="saved-row"><div><span>name</span>${esc(hit.name || '—')}</div><div><span>profile_slug</span>${esc(hit.profile_slug)}</div><div><span>profile_url</span><code>${esc(hit.profile_url)}</code></div></div>`
+        : '<div>Point the camera at a LinkedIn or Xing QR code</div>'}</div>
+      ${hit ? '' : `<div class="demo-pick">
+        ${db.live ? '' : `
+        <p>Demo: no camera in the prototype. Tap a profile to simulate a scan…</p>
+        ${PERSONAS.map(p => {
+          const parsed = parseProfile(p.url);
+          const taken = db.findContact(ui.eventId, parsed.profile_url);
+          return `<button class="chip" ${taken ? 'disabled' : ''} onclick="scanned('${p.url}')">
+            ${avatar(parsed.name)}<span style="flex:1">${esc(parsed.name)}<small>${taken ? 'Already scanned at this event' : esc(parsed.profile_url)}</small></span>${srcBadge(parsed.source)}</button>`;
+        }).join('')}`}
+        <p style="margin-top:12px">…or paste any profile link the QR would contain:</p>
+        <div class="urlrow"><input id="urlIn" placeholder="linkedin.com/in/max-mustermann-12ab" onkeydown="if(event.key==='Enter')scanUrl()"><button onclick="scanUrl()">Scan</button></div>
+      </div>`}`;
+  },
+
+  note() {
+    const c = db.get('contacts', ui.contactId);
+    const persona = db.live ? null : personaFor(c.profile_url);
+    const r = ui.rec;
+    const textMode = ui.noteMode === 'text';
+    const voiceDone = r.status === 'done';
+    const voiceBusy = r.status === 'transcribing';
+    const voiceFailed = r.status === 'error';
+    const canProcess = textMode ? ui.noteText.trim().length > 0 : voiceDone && ui.noteText.trim().length > 0;
+    return `
+      <div class="flowbar"><button class="icon-btn" ${voiceBusy ? 'disabled' : ''} onclick="go('today')">✕</button><span class="step">Note</span><span style="width:36px"></span></div>
+      <div class="linkchip">${srcBadge(c.source)}<code>${esc(c.profile_url)}</code><span class="pill ok">✓ saved</span></div>
+      <div class="label">Which project is ${esc((c.name || 'this person').split(' ')[0])} for? <span class="ai">optional</span></div>
+      <div class="pchips" id="pchips">
+        <button class="pchip ${c.project_set_by === 'user' ? '' : 'on'}" data-id="" onclick="pickProject('')">✨ Let AI suggest</button>
+        ${projects().map(p => `<button class="pchip ${c.project_set_by === 'user' && c.project_id === p.id ? 'on' : ''}" data-id="${p.id}" onclick="pickProject('${p.id}')">${p.emoji || '📌'} ${esc(p.name)}</button>`).join('')}
+        <button class="pchip ${c.project_set_by === 'user' && !c.project_id ? 'on' : ''}" data-id="none" onclick="pickProject('none')">No project</button>
+      </div>
+      <div class="title" style="margin-top:14px">How did it go with ${esc((c.name || 'them').split(' ')[0])}?</div>
+      <div class="seg" role="tablist">
+        <button class="${textMode ? 'on' : ''}" ${voiceBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
+        <button class="${textMode ? '' : 'on'}" ${voiceBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">🎙️ Voice memo</button>
+      </div>
+      <div class="prompts"><span>Who are they?</span><span>What do they need?</span><span>What did you agree?</span></div>
+      ${textMode ? `
+        <textarea class="edit" id="noteIn" rows="7" placeholder="e.g. Runs procurement at X, needs a React dev from January, call him Tuesday." oninput="ui.noteText=this.value;document.getElementById('procBtn').disabled=!this.value.trim()">${esc(ui.noteText)}</textarea>
+        ${persona ? `<button class="linkbtn" style="margin-top:6px" onclick="useDemoNote()">Use demo note</button>` : ''}`
+      : `
+        ${voiceDone || voiceBusy ? '' : `<div class="mic-wrap">
+          <button class="mic ${r.status === 'recording' ? 'rec' : ''}" onclick="toggleRec()" aria-label="${r.status === 'recording' ? 'Stop recording' : 'Start recording'}">${r.status === 'recording' ? '<span class="stopicon"></span>' : ICONS.mic}</button>
+          <div class="timer" id="timer">${r.status === 'recording' ? '0:00' : 'Tap to record'}</div>
+          <div class="wave" id="wave">${'<i></i>'.repeat(28)}</div>
+        </div>`}
+        <div class="card transcript">${voiceDone
+          ? `<div class="label" style="margin-top:0">Transcript <span class="ai">edit if needed</span></div>
+             <textarea class="edit" rows="6" oninput="ui.noteText=this.value;document.getElementById('procBtn').disabled=!this.value.trim()">${esc(ui.noteText)}</textarea>`
+          : voiceBusy ? '<span class="muted">Transcribing your recording…</span>'
+          : voiceFailed ? `<span style="color:#b42318">${esc(ui.error || 'Transcription failed. Record again and retry.')}</span>`
+          : `<span class="${r.status === 'recording' ? '' : 'muted'}" id="txlive">${r.status === 'recording' ? 'Recording audio…' : 'Tap the microphone to record.'}</span>${r.status === 'recording' ? '<span class="caret"></span>' : ''}`}
+        </div>
+        ${voiceDone || voiceFailed ? `<button class="linkbtn" style="margin-top:6px" onclick="rerecord()">↺ Record again</button>` : ''}`}
+      <div class="row" style="margin-top:16px">
+        <button class="btn" style="flex:0 0 auto" ${voiceBusy ? 'disabled' : ''} onclick="go('today')">Later</button>
+        <button class="btn btn-primary" id="procBtn" ${canProcess ? '' : 'disabled'} onclick="processNote()">✨ Process</button>
+      </div>
+      <p class="muted small" style="margin-top:8px">“Later” keeps ${esc((c.name || 'the contact').split(' ')[0])} on your list with a “Needs a note” badge.</p>`;
+  },
+
+  processing() {
+    const c = db.get('contacts', ui.contactId);
+    if (c.status === 'error') return `<div class="proc"><div class="title">Processing stopped</div><p class="sub">${esc(ui.error || 'Your note is still available. Try again.')}</p><button class="btn btn-primary" onclick="runLiveProcess()">Retry</button><button class="btn" onclick="go('note')">Back to note</button></div>`;
+    return `
+      <div class="proc">
+        <div class="orb"></div>
+        <div class="title" style="margin-top:22px">Working on it…</div>
+        <div class="muted small">${esc(c.name || c.profile_slug)} · a few seconds</div>
+        <ul class="steps" id="steps">${procSteps(c).map(s => `<li><span class="ic"></span>${s}</li>`).join('')}</ul>
+      </div>`;
+  },
+
+  review() {
+    const d = ui.draft;
+    const ev = event(d.event_id);
+    const editingSaved = ui.from === 'detail';
+    return `
+      <div class="flowbar"><button class="icon-btn" onclick="${editingSaved ? `openContact('${d.id}')` : `go('note')`}">‹</button><span class="step">${editingSaved ? 'Edit contact' : 'Review'}</span><span style="width:36px"></span></div>
+      <div class="who">${avatar(d.name, 54)}<div style="flex:1;min-width:0">
+        <div class="n">${esc(d.name || d.profile_slug)}</div>
+        <div class="r">${esc(SOURCE_LABEL[d.source])} · ${ev ? esc(ev.name) : 'No event'}</div></div>${srcBadge(d.source)}</div>
+
+      <div class="match">
+        <div class="head"><b class="small">Assign a project</b>${d.project_set_by === 'user'
+          ? '<span class="pill grey">Set by you</span>'
+          : d.project_id ? `<span class="pill ok">AI suggestion · ${esc(d.match_confidence || '')} fit</span>` : '<span class="pill grey">AI found no match</span>'}</div>
+        <select class="edit" onchange="assignProject(this.value)">
+          ${projects().map(p => `<option value="${p.id}" ${p.id === d.project_id ? 'selected' : ''}>${p.emoji || ''} ${esc(p.name)}</option>`).join('')}
+          <option value="" ${!d.project_id ? 'selected' : ''}>No project</option>
+        </select>
+        ${d.match_reason ? `<div class="reason">${esc(d.match_reason)}</div>` : ''}
+      </div>
+
+      <label class="field"><span>Name</span><input class="edit" value="${esc(d.name)}" oninput="ui.draft.name=this.value"></label>
+      <div class="row">
+        <label class="field"><span>Role</span><input class="edit" value="${esc(d.role)}" placeholder="—" oninput="ui.draft.role=this.value"></label>
+        <label class="field"><span>Company</span><input class="edit" value="${esc(d.company)}" placeholder="—" oninput="ui.draft.company=this.value"></label>
+      </div>
+      <label class="field"><span>Summary ✨</span><textarea class="edit" rows="2" oninput="ui.draft.summary=this.value">${esc(d.summary)}</textarea></label>
+      <label class="field"><span>What you talked about (one per line, max 3)</span><textarea class="edit" rows="3" oninput="ui.draft.discussed=this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3)">${esc((d.discussed || []).join('\n'))}</textarea></label>
+      <label class="field"><span>What they need</span><input class="edit" value="${esc(d.needs)}" oninput="ui.draft.needs=this.value"></label>
+      <div class="row">
+        <label class="field" style="flex:1.4"><span>Next step</span><input class="edit" value="${esc(d.next_step)}" oninput="ui.draft.next_step=this.value"></label>
+        <label class="field"><span>Due</span><input class="edit" type="date" value="${d.next_step_date || ''}" onchange="ui.draft.next_step_date=this.value||null"></label>
+      </div>
+      <div class="label">Follow-up draft <button class="copy" onclick="copyText(this, ui.draft.follow_up_draft)">Copy</button></div>
+      <textarea class="edit" rows="4" oninput="ui.draft.follow_up_draft=this.value">${esc(d.follow_up_draft)}</textarea>
+      <details style="margin-top:12px"><summary class="muted small" style="cursor:pointer">Your original note</summary><p class="small">${esc(d.note_text)}</p></details>
+      <p class="muted small" style="margin:8px 2px 0">Nothing is sent to ${esc((d.name || 'them').split(' ')[0])} automatically.</p>
+      <div class="footer"><button class="btn btn-primary btn-block" onclick="saveContact(this)">${editingSaved ? 'Save changes' : 'Save contact'}</button></div>`;
+  },
+
+  saved() {
+    const c = db.get('contacts', ui.contactId);
+    const p = proj(c.project_id);
+    return `
+      <div class="success"><div class="check">✓</div>
+        <div class="title">Saved</div>
+        <p class="sub">${esc(c.name)} is filed under ${p ? `<b>${p.emoji} ${esc(p.name)}</b>` : 'your contacts'}${c.next_step ? `, next: ${esc(c.next_step)}${c.next_step_date ? ' (' + fmtDate(c.next_step_date) + ')' : ''}` : ''}.</p></div>
+      <div class="section-title">At ${esc(event(c.event_id)?.name || 'this event')}</div>
+      ${eventContacts(c.event_id).map(personRow).join('')}
+      <div class="phase2"><span class="n-logo">N</span>Sync to Notion or your notes app arrives in Phase 2. Until then, everything is in your Syncy dashboard.</div>
+      <div class="row" style="margin-top:16px">
+        <a class="btn" href="dashboard.html">Dashboard</a>
+        <button class="btn btn-primary" onclick="startScan()">Scan next person</button>
+      </div>`;
+  },
+
+  detail() {
+    const c = db.get('contacts', ui.contactId);
+    const p = proj(c.project_id), ev = event(c.event_id);
+    return `
+      <div class="flowbar"><button class="icon-btn" onclick="go(ui.tab)">‹</button><span class="step">${ev ? esc(ev.name) : ''}</span><span><button class="btn btn-sm" onclick="editContact()">Edit</button> <button class="btn btn-sm" style="color:#b42318" onclick="deleteCurrentContact()">Delete</button></span></div>
+      <div class="who">${avatar(c.name, 54)}<div style="flex:1"><div class="n">${esc(c.name)}</div><div class="r">${esc([c.role, c.company].filter(Boolean).join(' · '))}</div></div>${srcBadge(c.source)}</div>
+      <div class="linkchip" style="margin-top:12px">${srcBadge(c.source)}<code>${esc(c.profile_url)}</code></div>
+      <div class="match"><div class="muted small">Project</div>
+        <div style="font-weight:700">${p ? p.emoji + ' ' + esc(p.name) : 'No project'}</div>
+        ${c.match_reason ? `<div class="reason">${esc(c.match_reason)}</div>` : ''}</div>
+      <div class="label">Summary</div><div>${esc(c.summary)}</div>
+      ${c.discussed?.length ? `<div class="label">What you talked about</div><div class="card"><ul class="bul">${c.discussed.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+      <div class="label">What they need</div><div>${esc(c.needs || '—')}</div>
+      <div class="label">Next step</div><div><b>${esc(c.next_step || '—')}</b>${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</div>
+      <div class="label">Stage</div><div><span class="pill grey">${STAGE_LABEL[c.stage]}</span> <span class="muted small">change it in the dashboard</span></div>
+      ${c.follow_up_draft ? `<div class="label">Follow-up draft <button class="copy" onclick="copyText(this, db.get('contacts', ui.contactId).follow_up_draft)">Copy</button></div><div class="card small">${esc(c.follow_up_draft)}</div>` : ''}`;
+  },
+};
+
+// One form for creating an event and editing an existing one (ui.eventForm = 'new' | event id).
+function eventFormHtml(ev) {
+  return `<div class="new-event">
+      <b>${ev ? 'Edit event' : 'New event'}</b>
+      <label class="field"><span>Name</span><input class="edit" id="evName" value="${esc(ev?.name || '')}" placeholder="e.g. Berlin Startup Breakfast"></label>
+      <div class="row">
+        <label class="field"><span>Where</span><input class="edit" id="evLoc" value="${esc(ev?.location || '')}" placeholder="optional"></label>
+        <label class="field"><span>Date</span><input class="edit" id="evDate" type="date" value="${ev?.starts_on || db.TODAY}"></label>
+      </div>
+      <label class="field"><span>Event link</span><input class="edit" id="evUrl" type="url" inputmode="url" value="${esc(ev?.url || '')}" placeholder="optional, e.g. meetup.com/…"></label>
+      <div class="url-error" id="evUrlErr"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" onclick="ui.eventForm=null;render()">Cancel</button><button class="btn btn-primary" onclick="saveEvent()">${ev ? 'Save changes' : 'Create'}</button></div>
+    </div>`;
+}
+
+function eventPicker() {
+  const events = db.list('events').sort((a, b) => b.starts_on.localeCompare(a.starts_on));
+  const counts = db.list('contacts').reduce((m, c) => (m[c.event_id] = (m[c.event_id] || 0) + 1, m), {});
+  if (!ui.pickId) ui.pickId = (events.find(e => e.starts_on === db.TODAY) || events[0])?.id || null;
+  return `
+    <div class="top"><div class="brand"><span class="logo"></span>Syncy</div></div>
+    <div class="title">Where are you networking?</div>
+    <p class="sub">Pick the event or create a new one. Everyone you scan is filed under it.</p>
+    ${events.map(e => ui.eventForm === e.id ? eventFormHtml(e) : `<button class="ev-option ${ui.pickId === e.id ? 'on' : ''}" onclick="ui.pickId='${e.id}';ui.eventForm=null;render()">
+      <span class="radio"></span>
+      <span class="meta"><b>${esc(e.name)}${e.starts_on === db.TODAY ? '<span class="today">Today</span>' : ''}</b>
+      <span class="muted small">${esc(e.location || '')}${e.location ? ' · ' : ''}${fmtDate(e.starts_on)} · ${counts[e.id] || 0} people</span>
+      ${e.url ? `<span class="ev-link">🔗 ${esc(urlHost(e.url))}</span>` : ''}</span></button>
+      ${ui.pickId === e.id && !ui.eventForm ? `<button class="ev-edit" onclick="openEventForm('${e.id}')">✎ Edit event details</button>` : ''}`).join('')}
+    ${ui.eventForm === 'new' ? eventFormHtml(null)
+      : `<button class="btn btn-block" style="margin-bottom:8px" onclick="openEventForm('new')">＋ Create a new event</button>`}
+    <div class="stick-bottom"><button class="btn btn-primary btn-block" ${ui.pickId && !ui.eventForm ? '' : 'disabled'} onclick="enterEvent()">Enter event →</button></div>`;
+}
+
+function eventHome() {
+  const ev = event(ui.eventId);
+  const list = eventContacts(ev.id);
+  const pending = list.filter(c => c.status === 'captured').length;
+  return `
+    <div class="top"><div class="brand"><span class="logo"></span>Syncy</div><a class="icon-btn" href="dashboard.html" title="Dashboard" style="text-decoration:none">▦</a></div>
+    <div class="event"><span class="dot"></span><div style="min-width:0">You're at <b>${esc(ev.name)}</b><br><small>${esc(ev.location || '')}${ev.location ? ' · ' : ''}${fmtDate(ev.starts_on)}</small>
+      ${ev.url && !ui.editUrl
+        ? `<div class="ev-url"><a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(urlHost(ev.url))} ↗</a><button onclick="ui.editUrl=true;render()">Edit</button></div>`
+        : ui.editUrl ? '' : `<div class="ev-url"><button onclick="ui.editUrl=true;render();document.getElementById('evUrlEdit').focus()">＋ Add event link</button></div>`}</div>
+      <button class="leave" onclick="leaveEvent()">Leave</button></div>
+    ${ui.editUrl ? `<div class="card" style="margin-top:8px">
+        <label class="field" style="margin-top:0"><span>Event link</span><input class="edit" id="evUrlEdit" type="url" inputmode="url" value="${esc(ev.url || '')}" placeholder="e.g. meetup.com/…" onkeydown="if(event.key==='Enter')saveEventUrl()"></label>
+        <div class="url-error" id="evUrlErr"></div>
+        <div class="row" style="margin-top:10px"><button class="btn btn-sm" onclick="ui.editUrl=false;render()">Cancel</button>${ev.url ? '<button class="btn btn-sm" onclick="saveEventUrl(true)">Remove</button>' : ''}<button class="btn btn-sm btn-primary" onclick="saveEventUrl()">Save link</button></div>
+      </div>` : ''}
+    <div class="stats">
+      <div class="stat"><b>${list.length}</b><span>people scanned here</span></div>
+      <div class="stat"><b>${pending}</b><span>still need a note</span></div>
+      <div class="stat"><b>${list.filter(c => c.project_id).length}</b><span>linked to your projects</span></div>
+    </div>
+    <button class="scan-cta" onclick="startScan()">${ICONS.qr}<span><b>Scan someone's QR</b><small>LinkedIn · Xing · any profile link</small></span></button>
+    <div class="section-title">People at this event</div>
+    ${list.length ? list.map(personRow).join('') : '<div class="empty">Nobody yet. Scan the first QR code.</div>'}`;
+}
+
+// ---------- after-render hooks ----------
+function procSteps(c) {
+  return ['Summarising your note',
+    c.project_set_by === 'user' ? 'Keeping the project you picked' : `Comparing with your ${projects().length} projects`,
+    'Drafting a follow-up'];
+}
+const AFTER = {
+  scan() { if (db.live && !ui.justScanned && window.Html5Qrcode && !ui.scanner) startCameraScan(); },
+  processing() {
+    if (db.live) { if (!ui.processing && db.get('contacts', ui.contactId).status !== 'error') runLiveProcess(); return; }
+    const lis = [...document.querySelectorAll('#steps li')];
+    lis.forEach((li, i) => {
+      later(() => { li.className = 'doing'; }, i * 650);
+      later(() => { li.className = 'done'; li.querySelector('.ic').textContent = '✓'; }, i * 650 + 600);
+    });
+    later(() => {
+      const c = db.get('contacts', ui.contactId);
+      // A project picked by hand after the scan wins over the AI's suggestion.
+      const keep = c.project_set_by === 'user'
+        ? { project_id: c.project_id, project_set_by: 'user', match_confidence: null, match_reason: c.match_reason }
+        : { project_set_by: 'ai' };
+      ui.draft = db.update('contacts', c.id, { ...simulateAI(c), ...keep, status: 'review' });
+      ui.from = 'note';
+      go('review');
+    }, lis.length * 650 + 300);
+  },
+};
+
+// ---------- actions: event ----------
+// Reads an event-link input; returns undefined (and shows why) when it isn't a usable web address.
+function readEventUrl(inputId) {
+  const raw = document.getElementById(inputId).value;
+  const url = normalizeUrl(raw);
+  if (raw.trim() && !url) {
+    document.getElementById('evUrlErr').textContent = 'That doesn’t look like a web address.';
+    document.getElementById(inputId).focus();
+    return undefined;
+  }
+  return url;
+}
+function openEventForm(which) {
+  ui.eventForm = which;
+  render();
+  document.getElementById('evName').focus();
+}
+// Creates the event (ui.eventForm = 'new') or updates the one being edited.
+async function saveEvent() {
+  const name = document.getElementById('evName').value.trim();
+  if (!name) { document.getElementById('evName').focus(); return; }
+  const url = readEventUrl('evUrl');
+  if (url === undefined) return;
+  const fields = { name, location: document.getElementById('evLoc').value.trim() || null, url, starts_on: document.getElementById('evDate').value || db.TODAY };
+  const ev = ui.eventForm === 'new' ? db.insert('events', fields) : db.update('events', ui.eventForm, fields);
+  if (db.live) {
+    try { await db.flush('events', ev.id); }
+    catch { document.getElementById('evUrlErr').textContent = 'Could not save the event. Check your connection and try again.'; return; }
+  }
+  ui.pickId = ev.id; ui.eventForm = null;
+  render();
+}
+function saveEventUrl(remove = false) {
+  const url = remove ? null : readEventUrl('evUrlEdit');
+  if (url === undefined) return;
+  db.update('events', ui.eventId, { url });
+  ui.editUrl = false;
+  render();
+}
+function enterEvent() { setActiveEvent(ui.pickId); ui.editUrl = false; go('today'); }
+function leaveEvent() { setActiveEvent(null); ui.editUrl = false; go('today'); }
+
+// ---------- actions: scan ----------
+function startScan() { ui.justScanned = null; go('scan'); }
+function startCameraScan() {
+  if (ui.scanner || !document.getElementById('qr-reader')) return;
+  ui.scanner = new Html5Qrcode('qr-reader');
+  ui.scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, text => {
+    stopCameraScan(); scanned(text);
+  }, () => {}).catch(error => { ui.error = `Camera unavailable: ${error.message}`; alert(ui.error); });
+}
+function stopCameraScan() { if (ui.scanner) { const scanner = ui.scanner; ui.scanner = null; scanner.stop().catch(() => {}).finally(() => scanner.clear()); } }
+function scanUrl() {
+  const v = document.getElementById('urlIn').value.trim();
+  if (v) scanned(v);
+}
+// Scan = save immediately: profile_url, slug and name-from-slug (FR-1, P-1).
+function scanned(raw) {
+  stopCameraScan();
+  const canonical = normalizeUrl(raw);
+  if (!canonical) { alert('That QR code does not contain a valid web profile link.'); return; }
+  const parsed = parseProfile(canonical);
+  let row = db.findContact(ui.eventId, parsed.profile_url);
+  if (!row) {
+    row = db.insert('contacts', { ...parsed, event_id: ui.eventId, scanned_at: nowIso(), status: 'captured' });
+  }
+  ui.justScanned = row.id;
+  render();
+  later(() => openNote(row.id), 1600);
+}
+
+// ---------- actions: note ----------
+function openNote(id) {
+  ui.contactId = id; ui.noteMode = 'text'; ui.noteText = '';
+  ui.rec = { status: 'idle', secs: 0, words: 0 };
+  go('note');
+}
+function setNoteMode(mode) {
+  clearTimers();
+  ui.noteMode = mode;
+  if (mode === 'voice' && ui.rec.status !== 'done') ui.rec = { status: 'idle', secs: 0, words: 0 };
+  render();
+}
+// Manual project right after the scan: '' = let the AI suggest, 'none' = deliberately no project.
+function pickProject(id) {
+  const p = id && id !== 'none' && db.get('projects', id);
+  db.update('contacts', ui.contactId, id === ''
+    ? { project_id: null, project_set_by: null, match_confidence: null, match_reason: null }
+    : { project_id: p ? p.id : null, project_set_by: 'user', match_confidence: null,
+        match_reason: p ? `Assigned by you to “${p.name}”.` : 'You chose not to link a project.' });
+  // Update the chips in place: a full render would interrupt a running voice recording.
+  document.querySelectorAll('#pchips .pchip').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+}
+function useDemoNote() {
+  ui.noteText = personaFor(db.get('contacts', ui.contactId).profile_url).note;
+  render();
+}
+function toggleRec() {
+  if (db.live) return recordLive();
+  const r = ui.rec;
+  if (r.status === 'idle') {
+    r.status = 'recording'; r.secs = 0; r.words = 0;
+    render();
+    const c = db.get('contacts', ui.contactId);
+    const script = personaFor(c.profile_url)?.note
+      || `Met ${(c.name || 'them').split(' ')[0]} at the event. We talked about what they are working on and agreed to stay in touch.`;
+    const words = script.split(' ');
+    const live = document.getElementById('txlive');
+    every(() => {
+      r.secs++;
+      document.getElementById('timer').textContent = '0:' + String(r.secs).padStart(2, '0');
+      if (r.secs >= 60) stopRec(script);
+    }, 1000);
+    every(() => {
+      if (r.words < words.length) live.textContent = words.slice(0, ++r.words).join(' ');
+      document.querySelectorAll('#wave i').forEach(i => { i.style.height = (6 + Math.random() * 28) + 'px'; });
+    }, 120);
+    r.script = script;
+  } else if (r.status === 'recording') {
+    stopRec(r.script);
+  }
+}
+function recordLive() {
+  if (ui.rec.status === 'recording') { window.syncyVoiceDebug(ui.voiceDebugId, 'stop_clicked'); ui.rec.recorder.stop(); clearInterval(ui.rec.timer); return; }
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { alert('Voice recording is not available in this browser. Use a typed note.'); return; }
+  ui.voiceDebugId = crypto.randomUUID();
+  ui.audioBlob = null;
+  window.syncyVoiceDebug(ui.voiceDebugId, 'microphone_permission_requested');
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(type => MediaRecorder.isTypeSupported(type));
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    ui.rec = { status: 'recording', secs: 0, recorder };
+    recorder.ondataavailable = event => { if (event.data.size) { ui.audioBlob = event.data; window.syncyVoiceDebug(ui.voiceDebugId, 'audio_data_available', { bytes: event.data.size, mime_type: event.data.type || recorder.mimeType }); } else window.syncyVoiceDebug(ui.voiceDebugId, 'empty_audio_chunk'); };
+    recorder.onerror = event => window.syncyVoiceDebug(ui.voiceDebugId, 'recorder_error', { error: event.error?.name || 'unknown' });
+    recorder.onstop = () => {
+      stream.getTracks().forEach(track => track.stop()); clearInterval(ui.rec.timer);
+      const blob = ui.audioBlob, debugId = ui.voiceDebugId;
+      ui.rec.status = 'transcribing';
+      window.syncyVoiceDebug(debugId, 'recording_stopped', { seconds: ui.rec.secs, audio_bytes: blob?.size || 0, mime_type: blob?.type || recorder.mimeType });
+      render();
+      transcribeLiveRecording(blob, debugId);
+    };
+    window.syncyVoiceDebug(ui.voiceDebugId, 'recorder_started', { mime_type: recorder.mimeType || 'browser-default' });
+    recorder.start(); render();
+    ui.rec.timer = setInterval(() => {
+      ui.rec.secs++;
+      const timer = document.getElementById('timer'); if (timer) timer.textContent = `0:${String(ui.rec.secs).padStart(2, '0')}`;
+      if (ui.rec.secs >= 60) recorder.stop();
+    }, 1000);
+  }).catch(error => { window.syncyVoiceDebug(ui.voiceDebugId, 'microphone_failed', { error: error.name || 'unknown', message: error.message }); ui.error = `Microphone unavailable: ${error.message}`; alert(ui.error); });
+}
+async function transcribeLiveRecording(blob, debugId) {
+  try {
+    if (!blob?.size) throw new Error('No audio data was captured. Record again and speak near the microphone.');
+    if (blob.size > 20 * 1024 * 1024) throw new Error('Recording is too large. Record a shorter memo.');
+    window.syncyVoiceDebug(debugId, 'transcription_request_started', { audio_bytes: blob.size, mime_type: blob.type });
+    const transcript = (await db.transcribeAudio(blob, debugId)).trim();
+    if (!transcript) throw new Error('Whisper returned an empty transcript. Record again and speak near the microphone.');
+    ui.noteText = transcript;
+    ui.audioBlob = null;
+    ui.rec.status = 'done';
+    ui.error = null;
+    window.syncyVoiceDebug(debugId, 'transcription_succeeded', { transcript_chars: transcript.length });
+    render();
+  } catch (error) {
+    ui.audioBlob = null;
+    ui.rec.status = 'error';
+    ui.error = error.message || String(error);
+    window.syncyVoiceDebug(debugId, 'transcription_failed', { message: ui.error });
+    render();
+  }
+}
+function stopRec(script) { clearTimers(); ui.rec.status = 'done'; ui.noteText = script; render(); }
+function rerecord() { clearTimers(); clearInterval(ui.rec.timer); ui.audioBlob = null; ui.error = null; ui.rec = { status: 'idle', secs: 0, words: 0 }; ui.noteText = ''; render(); }
+function processNote() {
+  const id = ui.contactId;
+  const voice = ui.noteMode === 'voice';
+  if (!ui.voiceDebugId) ui.voiceDebugId = crypto.randomUUID();
+  window.syncyVoiceDebug(ui.voiceDebugId, 'process_clicked', { note_kind: voice ? 'voice' : 'text', audio_bytes: ui.audioBlob?.size || 0 });
+  db.update('contacts', id, {
+    note_kind: voice ? 'voice' : 'text',
+    note_text: ui.noteText.trim(),
+    audio_path: null,
+    status: 'processing',
+  });
+  ui.error = null;
+  go('processing');
+}
+async function runLiveProcess() {
+  if (ui.processing) return;
+  ui.processing = true;
+  try {
+    const c = db.get('contacts', ui.contactId);
+    window.syncyVoiceDebug(ui.voiceDebugId, 'edge_function_call_started');
+    const updated = await db.process(c.id, ui.voiceDebugId);
+    window.syncyVoiceDebug(ui.voiceDebugId, 'edge_function_call_succeeded', { status: updated?.status || 'unknown', transcript_chars: updated?.note_text?.length || 0 });
+    ui.draft = updated; ui.from = 'note'; ui.processing = false; go('review');
+  } catch (error) {
+    window.syncyVoiceDebug(ui.voiceDebugId, 'client_pipeline_failed', { message: error.message || String(error) });
+    ui.processing = false; ui.error = error.message || String(error);
+    db.update('contacts', ui.contactId, { status: 'error' }); render();
+  }
+}
+
+// ---------- AI stand-in ----------
+// Real build: LLM call 1 (summarise) + call 2 (compare with projects, draft) per PRD §9.
+// Here: the scripted result for a demo persona's untouched note, otherwise a simple keyword heuristic.
+const STOP = new Set('a an and are as at be but by for from has have he her him his i if in is it its me my of on or our she so that the their them they this to was we were will with you your about also just very really who what when where which would could should there then than been into over more some any can did does not out up our ours us met talked said told'.split(' '));
+const stem = w => w.replace(/(ings?|ers?|es|s)$/, '');
+const words = s => (s.toLowerCase().match(/[a-zäöüß][a-zäöüß-]+/g) || []).filter(w => w.length > 2 && !STOP.has(w));
+
+function simulateAI(c) {
+  const persona = personaFor(c.profile_url);
+  if (persona && c.note_text === persona.note) return { role: persona.role, company: persona.company, ...persona.ai };
+
+  const note = c.note_text || '';
+  const sentences = note.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+  const clip = s => s.length > 140 ? s.slice(0, 137).trimEnd() + '…' : s;
+  const noDot = s => s.replace(/[.!?]+$/, '');
+
+  const scored = projects().map(p => {
+    const vocab = new Set(words(`${p.name} ${p.description}`).map(stem));
+    const hits = [...new Set(words(note).filter(w => vocab.has(stem(w))))];
+    return { p, hits };
+  }).sort((a, b) => b.hits.length - a.hits.length);
+  const best = scored[0] && scored[0].hits.length ? scored[0] : null;
+
+  const needs = sentences.find(s => /\b(need|needs|looking for|wants?|searching|hiring)\b/i.test(s)) || '';
+  const next = sentences.find(s => /\b(call|send|meet|coffee|follow|email|write|book|intro|catch up)\b/i.test(s)) || '';
+  const first = (c.name || '').split(' ')[0] || 'there';
+  const ev = event(c.event_id);
+
+  return {
+    summary: clip(noDot(sentences[0] || note)) || null,
+    discussed: sentences.slice(1, 4).map(s => clip(noDot(s))),
+    needs: needs ? clip(noDot(needs)) : null,
+    project_id: best ? best.p.id : null,
+    match_confidence: best ? (best.hits.length >= 3 ? 'high' : best.hits.length === 2 ? 'medium' : 'low') : null,
+    match_reason: best
+      ? `Your note mentions ${best.hits.slice(0, 3).map(h => `“${h}”`).join(', ')}, which fits “${best.p.name}”.`
+      : 'No clear overlap with your projects. Pick one yourself or leave it empty.',
+    next_step: next ? clip(noDot(next)) : null,
+    next_step_date: guessDate(next || note),
+    follow_up_draft: `Hi ${first}, great to meet you${ev ? ' at ' + ev.name : ''}.${needs ? ' I keep thinking about what you said: ' + noDot(needs).replace(/^\w/, ch => ch.toLowerCase()) + '.' : ''} Would a short call next week work for you?`,
+  };
+}
+function guessDate(text) {
+  const t = text.toLowerCase();
+  if (/\btomorrow\b/.test(t)) return addDays(db.TODAY, 1);
+  if (/\bnext week\b/.test(t)) return addDays(db.TODAY, 7);
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const i = days.findIndex(d => t.includes(d));
+  if (i >= 0) {
+    const today = new Date(db.TODAY + 'T12:00:00').getDay();
+    return addDays(db.TODAY, ((i - today + 7) % 7) || 7);
+  }
+  return null;
+}
+
+// ---------- actions: review / save ----------
+function assignProject(id) {
+  const p = id && db.get('projects', id);
+  ui.draft.project_id = id || null;
+  ui.draft.project_set_by = 'user';
+  ui.draft.match_confidence = null;
+  ui.draft.match_reason = p ? `Assigned by you to “${p.name}”.` : 'Not linked to a project.';
+  render();
+}
+async function saveContact(btn) {
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const d = ui.draft;
+  const fields = ['name', 'role', 'company', 'summary', 'discussed', 'needs', 'project_id', 'project_set_by', 'match_reason', 'match_confidence', 'next_step', 'next_step_date', 'follow_up_draft'];
+  const patch = Object.fromEntries(fields.map(f => [f, d[f] === '' ? null : d[f]]));
+  const save = async () => {
+    db.update('contacts', d.id, { ...patch, status: 'saved' });
+    if (db.live) await db.flush('contacts', d.id);
+    ui.contactId = d.id; ui.draft = null;
+    if (ui.from === 'detail') { go('detail'); } else { go('saved'); }
+  };
+  if (db.live) save().catch(error => { btn.disabled = false; btn.textContent = ui.from === 'detail' ? 'Save changes' : 'Save contact'; alert(`Could not save this contact: ${error.message}`); });
+  else later(save, 400);
+}
+function openContact(id) {
+  const c = db.get('contacts', id);
+  if (c.status === 'captured') { openNote(id); return; }
+  if (c.status === 'review' || c.status === 'processing') { ui.draft = c; ui.from = 'note'; ui.contactId = id; go('review'); return; }
+  ui.contactId = id;
+  go('detail');
+}
+function editContact() { ui.draft = db.get('contacts', ui.contactId); ui.from = 'detail'; go('review'); }
+async function deleteCurrentContact() {
+  const contact = db.get('contacts', ui.contactId);
+  if (!contact || !confirm(`Delete ${contact.name || 'this contact'} and its note and recording? This cannot be undone.`)) return;
+  try {
+    const result = await db.deleteContact(contact.id);
+    ui.contactId = null; ui.draft = null;
+    go(ui.tab);
+    if (!result.audioRemoved) alert('The contact was deleted, but its audio file could not be removed from Storage.');
+  } catch (error) { alert(`Could not delete contact: ${error.message || error}`); }
+}
+
+function addProject() {
+  const name = document.getElementById('pName').value.trim();
+  if (!name) { document.getElementById('pName').focus(); return; }
+  db.insert('projects', { name, description: document.getElementById('pDesc').value.trim(), emoji: '📌', archived: false, external_source: null, external_id: null, external_updated_at: null });
+  render();
+}
+
+function copyText(btn, text) {
+  navigator.clipboard?.writeText(text || '').catch(() => {});
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+
+window.addEventListener('db-change', () => { if (!['note', 'processing', 'review'].includes(ui.screen)) render(); });
+window.addEventListener('db-error', e => alert(`Could not sync with Supabase: ${e.detail}`));
+window.addEventListener('auth-change', () => location.replace('login.html?next=index.html'));
+async function signOut() { try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+ui = freshUi();
+db.init().then(authenticated => {
+  if (!authenticated) { location.replace('login.html?next=index.html'); return; }
+  document.getElementById('modeBanner').textContent = 'Supabase connected · private account data';
+  document.getElementById('sideIntro').textContent = `Signed in as ${db.user.email || 'your account'}:`;
+  document.getElementById('sideNote').textContent = 'Contacts, events, projects, and transcripts belong to your account. Voice audio is transcribed without being stored.';
+  document.getElementById('signOutButton').hidden = false;
+  ui = freshUi(); render();
+}).catch(error => {
+  document.getElementById('modeBanner').textContent = 'Supabase connection failed';
+  document.getElementById('sideNote').textContent = error.message || 'Check the Supabase URL and public key, then reload.';
+  document.getElementById('screen').innerHTML = '<div class="title">Could not connect to Supabase</div><p class="muted">Check your configuration and connection, then reload this page.</p><button class="btn btn-primary" onclick="location.reload()">Retry</button>';
+  document.getElementById('tabbar').style.display = 'none';
+});
+</script>
+</body>
+</html>

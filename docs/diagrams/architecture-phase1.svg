@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="426" viewBox="0 0 680 426" role="img" font-family="-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<title>Syncy Phase 1 architecture (hackathon build)</title>
+<desc>Phone app and dashboard talk to Supabase, which holds Postgres tables, private voice-note storage and an AI processing endpoint that calls external speech-to-text and LLM APIs.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#73726c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="426" fill="#ffffff"/>
+<rect x="40" y="100" width="170" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.75"/>
+<text x="125" y="123" text-anchor="middle" font-size="14" font-weight="600" fill="#3C3489">Phone app</text>
+<text x="125" y="142" text-anchor="middle" font-size="12" fill="#534AB7">scan · note · review</text>
+<rect x="40" y="330" width="170" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.75"/>
+<text x="125" y="353" text-anchor="middle" font-size="14" font-weight="600" fill="#3C3489">Dashboard</text>
+<text x="125" y="372" text-anchor="middle" font-size="12" fill="#534AB7">filter · edit · stages</text>
+<rect x="250" y="50" width="270" height="330" rx="20" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.75"/>
+<text x="385" y="78" text-anchor="middle" font-size="14" font-weight="600" fill="#27500A">Supabase</text>
+<text x="385" y="96" text-anchor="middle" font-size="12" fill="#3B6D11">email / Google auth · per-user RLS</text>
+<rect x="270" y="120" width="230" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="385" y="143" text-anchor="middle" font-size="14" font-weight="600" fill="#085041">Postgres</text>
+<text x="385" y="162" text-anchor="middle" font-size="12" fill="#0F6E56">events · projects · contacts</text>
+<rect x="270" y="210" width="230" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="385" y="233" text-anchor="middle" font-size="14" font-weight="600" fill="#085041">Storage</text>
+<text x="385" y="252" text-anchor="middle" font-size="12" fill="#0F6E56">voice transcript returned; audio not stored</text>
+<rect x="270" y="300" width="230" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="385" y="323" text-anchor="middle" font-size="14" font-weight="600" fill="#085041">Processing endpoint</text>
+<text x="385" y="342" text-anchor="middle" font-size="12" fill="#0F6E56">STT → LLM ×2 → write back</text>
+<rect x="540" y="300" width="100" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.75"/>
+<text x="590" y="323" text-anchor="middle" font-size="14" font-weight="600" fill="#444441">AI APIs</text>
+<text x="590" y="342" text-anchor="middle" font-size="12" fill="#5F5E5A">STT · LLM</text>
+<line x1="210" y1="128" x2="246" y2="128" stroke="#73726c" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="210" y1="358" x2="246" y2="358" stroke="#73726c" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="500" y1="328" x2="536" y2="328" stroke="#73726c" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>
