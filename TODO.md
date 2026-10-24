@@ -5,7 +5,7 @@ This checklist reflects the current PRD, implementation plan, backend brief, arc
 ## Scope and decisions
 
 - **Phase 1:** Supabase is the source of truth with email/password and Google sign-in and per-user RLS. Projects are managed in Syncy; the user can match contacts automatically, assign projects manually, and edit later.
-- **Phase 2 (post-hackathon):** Import/refresh projects from Notion, then optionally mirror contacts out. This keeps Notion import as a requested product capability without making it block the team's explicitly Supabase-only MVP.
+- **Notion import:** Users can copy projects from a shared Notion database into Syncy; contacts and project matching continue to use Supabase. Automatic refresh and contact write-back remain future work.
 - Supabase Edge Functions handle transcription and insights. OpenRouter is the LLM/STT provider; Vercel hosts the frontend.
 - Use OpenRouter's Whisper transcription endpoint (`openai/whisper-1`); it accepts the same OpenRouter key as the text calls.
 - Treat the $18 OpenRouter balance as a hard test budget across transcription and text calls: choose a low-cost model, bound prompts/output, log per-call usage/cost, and stop before exhausting the balance.
@@ -16,10 +16,10 @@ This checklist reflects the current PRD, implementation plan, backend brief, arc
 - [x] Reviewed PRD, pitch, PM plan, implementation plan, acceptance criteria, data model, schema, prototype, and the new backend/architecture/business docs.
 - [x] Phone flow and dashboard exist as clickable HTML/JS prototypes with invented seed data.
 - [x] Prototype supports basic manual project assignment, editing, filters, and localStorage persistence.
-- [x] New docs define a Phase 1 Supabase/Edge Function pipeline and defer Notion to Phase 2.
+- [x] Supabase/Edge Function pipeline, per-user auth, and Vercel build configuration are implemented.
 - [x] Supabase adapter, email/Google auth UI, password reset, per-user access, QR scan, stop-to-transcript voice flow, and Vercel build config are implemented.
 - [ ] Supabase project/credentials, provider keys, and deployment still need to be configured outside the repo.
-- [ ] No Notion connector exists (Phase 2 by current team plan).
+- [x] Notion OAuth, database selection, and one-way project import are implemented; external credentials, migration, deployment, and live verification remain.
 
 ## Phase 1 — Hackathon MVP
 
@@ -62,28 +62,28 @@ This checklist reflects the current PRD, implementation plan, backend brief, arc
 - [x] Update README with Supabase Auth, Google provider, SMTP, and Vercel setup.
 - [ ] Add the final deployed URL and verify git history contains no secrets.
 
-## Phase 2 — Notion projects in (requested follow-on)
+## Notion project import
 
-- [ ] Add acceptance criteria for initial import, refresh, edits/deletions, auto-match, manual override, and later contact editing.
-- [ ] Identify the Notion projects database/page and map its title and description properties; decide what to do when descriptions are blank.
-- [ ] Design per-user Notion OAuth and project import permissions.
-- [ ] Read projects server-side and upsert by Notion page ID into `projects`; verify the actual Postgres conflict target/unique index before implementing upsert.
-- [ ] Add initial import and manual refresh controls with a clear result count and recoverable errors.
-- [ ] Refresh renamed/edited projects and archive removed Notion projects without deleting rows or breaking existing contact links; exclude archived projects from AI matching.
-- [ ] Preserve manually created projects and user-assigned contact projects.
-- [ ] Consider contacts-out sync, rate-limit queue, and conflict handling only after projects-in is reliable; these are beyond the requested import workflow.
+- [x] Initial import, repeat import, auto-match, and manual contact assignment behavior are implemented; missing descriptions import as blank.
+- [x] Import discovers shared Notion data sources and maps the title property plus a description-like rich-text property; the user chooses the database in the app.
+- [x] Design per-user Notion OAuth and project import permissions.
+- [x] Read shared Notion data sources server-side; copy title and description into the authenticated user's `projects` rows.
+- [x] Add project-screen connect, database selection, import, result count, and recoverable error states.
+- [x] Re-import updates the existing project by Notion page ID without changing its project UUID/contact links; missing Notion pages remain in Syncy.
+- [ ] Apply the connection-table migration, create a public Notion integration, configure secrets/redirect URLs, deploy the Edge Function, and verify against a real workspace.
+- [x] Preserve manually created projects and user-assigned contact projects; repeat imports retain project UUIDs/contact links.
+- [ ] Consider contacts-out sync and conflict handling only if they become product requirements; they are outside the requested import workflow.
 
 ## Deferred beyond Phase 1
 
-- [ ] Notion import/refresh (Phase 2, while remaining an explicit requested product feature).
-- [ ] Contact write-back/two-way Notion sync, other notes-app connectors, multi-user auth/billing, automatic follow-up sending, and LinkedIn scraping.
+- [ ] Automatic Notion refresh, project deletion handling, contact write-back/two-way Notion sync, and other notes-app connectors.
+- [ ] Other notes-app connectors, billing, automatic follow-up sending, and LinkedIn scraping.
 - [ ] Badge/business-card vision extraction and vCard QR parsing unless the core MVP is complete early.
 
 ## Risks and dependencies
 
-- The new team docs explicitly defer Notion; keep it visible as Phase 2 and do not let it block the Supabase MVP.
-- Notion source database and title/description mapping are unknown; import cannot be reliable until identified.
+- Users must share the Notion database with the public integration during OAuth; only shared data sources are visible to import.
+- The importer uses the title property as the project name and prefers a rich-text property named Description, Summary, Details, or Goal.
 - Whisper transcription and the LLM calls both draw from the OpenRouter balance; monitor their combined usage against $18.
 - The schema enables per-user RLS, while the backend brief expects demo-user sign-in; configure auth before exposing the app.
-- The project's nullable `external_source`/`external_id` uniqueness may not be a safe upsert conflict target in PostgreSQL; verify and add a partial unique index if required.
 - The €0.02/contact estimate is unverified; use measured provider usage before claiming it.

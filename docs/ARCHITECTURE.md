@@ -11,8 +11,8 @@
 | Frontend | `prototype/index.html` + `dashboard.html` | same screens, real data | same + connector settings |
 | Data | `data.js` arrays in localStorage | **Supabase** Postgres (RLS); voice audio sent to Edge Function, not stored | Supabase stays source of truth |
 | AI | simulated | Edge Function: STT + 2 LLM calls | same |
-| Projects | seeded in `data.js` | typed in the app, `projects` table | **pulled from Notion** (OAuth) |
-| Contacts end up in | localStorage | Supabase (`status='saved'`) | Supabase **+ mirrored to Notion** |
+| Projects | seeded in `data.js` | typed in the app, `projects` table | copied from Notion on user request (OAuth) |
+| Contacts end up in | localStorage | Supabase (`status='saved'`) | Supabase; Notion write-back is future work |
 | Auth | none | Supabase email + Google auth, RLS per user | account settings / more providers |
 
 ## 1. Current — clickable prototype
@@ -58,33 +58,30 @@ flowchart LR
 
 **Security/cost:** AI + service keys live only in Edge Function env vars (AC-2.2, P-6); the browser holds only the public key. RLS and ownership checks isolate each account. Audio is forwarded to OpenRouter for transcription and discarded after the request; only transcript text is saved when the user taps Process. A transcription failure requires recording again.
 
-## 3. Phase 2 — Notion and notes-app sync
+## 3. Notion project import
 
-Supabase remains the **source of truth**; external apps attach through per-app connectors with two operations: `pullProjects()` and `pushContact()` ([DATA_MODEL.md §5](DATA_MODEL.md)).
+Supabase remains the **source of truth** after import. Notion provides one-way project copies; contacts and edits stay in Syncy.
 
 ```mermaid
 flowchart LR
   apps["Syncy apps<br/>(unchanged)"] --> pg
   subgraph supa["Supabase — source of truth"]
     pg[("Postgres<br/>projects.external_* · contacts.external_*")]
-    pull["Edge Fn pull-projects"]
-    push["Edge Fn push-contacts<br/>queue table · ~3 req/s · retries"]
+    pull["Edge Fn notion-projects"]
   end
   subgraph notes["Notes apps"]
     notion["Notion (OAuth, first target)"]
     other["Google Docs · Obsidian · Evernote"]
   end
-  notion -- "webhook, else 10–15 min poll (pg_cron)" --> pull --> pg
-  pg -- "DB webhook on status='saved'" --> push --> notion
-  push -. same connector interface .-> other
+  notion -- "OAuth · manual import/refresh" --> pull --> pg
 ```
 
-- **Projects in:** user connects Notion via OAuth and picks the projects page/database; `pull-projects` upserts on `(user_id, external_source, external_id)` and tracks Notion's `last_edited_time` in `external_updated_at`. Pages deleted in Notion → `archived=true` (contacts keep their link). Manual "Refresh" button as fallback.
-- **Contacts out:** a database webhook on `contacts` (insert/update where `status='saved'`) triggers `push-contacts`: first write `pages.create` (store Notion page id in `external_id`), afterwards `pages.update`, then set `external_synced_at`. Writes go through a small queue because Notion allows ~3 req/s per integration.
+- **Projects in:** user connects a Notion public integration, chooses an authorized data source, and imports. `notion-projects` copies titles/descriptions into Supabase and updates by Notion page ID while preserving project UUIDs and contact links. Import again to refresh; missing source pages are left in Syncy.
+- **Contacts out:** future work; Syncy does not write contact or project changes back to Notion.
 - **Conflicts:** fields Syncy generates (summary, match, draft) — Supabase wins. Two-way fields (stage, user notes, next-step date) — last write wins via `updated_at` vs `last_edited_time`.
 - **Other apps:** one connector module per app; Apple Notes has no public API (export/Shortcuts only).
 
-**Also parked for Phase 2+** (from PRD §2 and the graded data-access table): Notion and notes-app sync, badge-photo/vCard capture if cut from Phase 1 (D4), opt-in Apify enrichment for the paid tier (D8), both-sided Syncy QR consent exchange (roadmap), and billing.
+**Still future work:** automatic Notion polling/webhooks and deletion handling, contact write-back, other notes-app integrations, opt-in Apify enrichment for the paid tier (D8), both-sided Syncy QR consent exchange (roadmap), and billing.
 
 ## 4. What changes between phases (build checklist view)
 
@@ -94,6 +91,6 @@ flowchart LR
 | Apply `0001_phase1_schema.sql` + ownership migration; users sign up themselves | ✅ | — |
 | Build `process-note` Edge Function + prompts in repo | ✅ | — |
 | HTTPS hosting for the two pages (D9) | ✅ | — |
-| Notion OAuth + `pull-projects` / `push-contacts` + queue | — | ✅ |
+| Notion OAuth + `notion-projects` one-way import | — | ✅ |
 | Connector interface for further apps | — | ✅ |
 | Billing | — | ✅ |

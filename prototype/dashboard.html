@@ -281,11 +281,17 @@ const stage = id => STAGES.find(s => s.id === id);
 function initials(n) { return (n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
 function color(n) { let h = 0; for (const c of n || '?') h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
 const avatar = n => `<span class="avatar" style="background:${color(n)}">${esc(initials(n))}</span>`;
-function srcBadge(s) {
-  if (s === 'qr_xing') return '<span class="src xi" title="Xing">X</span>';
-  if (s === 'qr_linkedin') return '<span class="src li" title="LinkedIn">in</span>';
-  return '<span class="src ot" title="Profile link">↗</span>';
+// With a url, the badge links to the profile (clicks don't bubble into the row).
+function srcBadge(s, url) {
+  const cls = s === 'qr_xing' ? 'src xi' : s === 'qr_linkedin' ? 'src li' : 'src ot';
+  const title = s === 'qr_xing' ? 'Xing' : s === 'qr_linkedin' ? 'LinkedIn' : 'Profile link';
+  const label = s === 'qr_xing' ? 'X' : s === 'qr_linkedin' ? 'in' : '↗';
+  const href = url && normalizeUrl(url);
+  if (!href) return `<span class="${cls}" title="${title}">${label}</span>`;
+  return `<a class="${cls}" style="text-decoration:none" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="Open ${title}" onclick="event.stopPropagation()">${label}</a>`;
 }
+function initials2(n) { return (String(n || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) || '?').toUpperCase(); }
+function projTag(p) { return `<span class="src" style="border-radius:5px;background:${color(p.name)}" title="${esc(p.name)}">${esc(initials2(p.name))}</span>`; }
 function days(iso) { return Math.round((Date.parse(iso) - Date.parse(db.TODAY)) / 86400000); }
 function fmt(iso) { return new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); }
 const isOpen = c => c.stage === 'to_follow_up' || c.stage === 'followed_up';
@@ -348,7 +354,7 @@ function renderStats() {
     statBtn('pending', pending, 'scanned, still need a note') +
     `<div class="stat projects"><div class="lbl">Contacts per project</div><div class="bars">${projects().map(p => {
       const n = all.filter(c => c.project_id === p.id).length;
-      return `<div class="bar"><span>${p.emoji || '📌'} ${esc(p.name)}</span><b>${n}</b><span class="track"><span class="fill" style="width:${n / max * 100}%"></span></span></div>`;
+      return `<div class="bar"><span>${projTag(p)} ${esc(p.name)}</span><b>${n}</b><span class="track"><span class="fill" style="width:${n / max * 100}%"></span></span></div>`;
     }).join('')}</div></div>`;
   document.getElementById('navCount').textContent = all.length;
   document.getElementById('subline').textContent = `${all.filter(c => isOpen(c) && !needsNote(c)).length} open follow-ups · ${pending} waiting for a note`;
@@ -358,7 +364,7 @@ function renderFilters() {
   const all = contacts();
   const fp = document.getElementById('fProject');
   fp.innerHTML = `<option value="all">All projects</option>` +
-    projects().map(p => `<option value="${p.id}">${p.emoji || ''} ${esc(p.name)} (${all.filter(c => c.project_id === p.id).length})</option>`).join('') +
+    projects().map(p => `<option value="${p.id}">${esc(p.name)} (${all.filter(c => c.project_id === p.id).length})</option>`).join('') +
     `<option value="none">No project (${all.filter(c => !c.project_id).length})</option>`;
   const fe = document.getElementById('fEvent');
   fe.innerHTML = `<option value="all">All events</option>` +
@@ -394,9 +400,9 @@ function renderRows() {
     const p = proj(c.project_id), s = stage(c.stage), e = event(c.event_id);
     const who = [c.role, c.company].filter(Boolean).join(' · ') || c.profile_url;
     return `<div class="row ${state.openId === c.id ? 'open' : ''}" role="row" tabindex="0" onclick="openDrawer('${c.id}')" onkeydown="if(event.key==='Enter')openDrawer('${c.id}')">
-      <div class="person">${avatar(c.name)}<div style="min-width:0"><div class="pname">${esc(c.name || c.profile_slug)} ${srcBadge(c.source)}</div><div class="prole">${esc(who)}</div></div></div>
+      <div class="person">${avatar(c.name)}<div style="min-width:0"><div class="pname">${esc(c.name || c.profile_slug)} ${srcBadge(c.source, c.profile_url)}</div><div class="prole">${esc(who)}</div></div></div>
       <div class="summary">${needsNote(c) ? '<span class="pill need-note">✍️ Scanned, needs a note</span>' : esc(c.summary)}</div>
-      <div class="proj-cell">${p ? `<span class="pill" title="${esc(p.name)}">${p.emoji || ''} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill">No project</span>'}</div>
+      <div class="proj-cell">${p ? `<span class="pill" title="${esc(p.name)}">${projTag(p)} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill">No project</span>'}</div>
       <div class="next">${esc(c.next_step || '—')}${dueLabel(c)}</div>
       <div class="stage-cell"><span class="pill st-${s.id}">${s.label}</span></div>
       <div class="met"><b>${esc(e?.name || 'No event')}</b>${e ? fmt(e.starts_on) : ''}${e?.url ? ` · <a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Event page: ${esc(urlHost(e.url))}" aria-label="Event page">🔗</a>` : ''}</div>
@@ -432,7 +438,7 @@ function renderDrawer() {
       <div class="label">Project ${c.project_set_by === 'ai' ? '<span class="ai">✨ suggested by AI</span>' : c.project_set_by === 'user' ? '<span class="ai" style="color:var(--muted)">set by you</span>' : ''}</div>
       <div class="match">
         <select class="edit" onchange="assignProject(this.value)">
-          ${projects().map(p => `<option value="${p.id}" ${p.id === c.project_id ? 'selected' : ''}>${p.emoji || ''} ${esc(p.name)}</option>`).join('')}
+          ${projects().map(p => `<option value="${p.id}" ${p.id === c.project_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
           <option value="" ${!c.project_id ? 'selected' : ''}>No project</option>
         </select>
         ${c.match_reason ? `<div class="reason">${esc(c.match_reason)}</div>` : ''}
@@ -443,9 +449,6 @@ function renderDrawer() {
 
       <div class="label">What you talked about <span class="ai" style="color:var(--muted)">one per line, max 3</span></div>
       <textarea class="edit" rows="3" onchange="update('discussed', this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3))">${esc((c.discussed || []).join('\n'))}</textarea>
-
-      <div class="label">What they need</div>
-      ${input('needs')}
 
       <div class="label">Next step</div>
       <div class="two">${input('next_step')}

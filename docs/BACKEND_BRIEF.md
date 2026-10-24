@@ -55,7 +55,7 @@ sequenceDiagram
 | **MediaRecorder API** | voice memo | phone page | built-in; send audio in memory to the authenticated Edge Function | Nodir | — |
 | **HTTPS static hosting** (D9: Vercel/Netlify) | serve the two pages; camera+mic require HTTPS | cloud | one-command deploy | Utkarsh | ❌ today |
 | GitHub | repo + submission (M6) | — | all 5 have access | Nodir | ✅ |
-| ~~Notion API, OAuth, pg_cron, webhooks/queues~~ | **Phase 2 — do not set up this weekend** ([ARCHITECTURE.md §3](ARCHITECTURE.md)) | — | — | — | parked |
+| Notion project import | public OAuth + read-only API via `notion-projects` Edge Function | server-side | `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URIS` | Utkarsh | migration, credentials, and deploy required |
 
 ### Keys and env
 

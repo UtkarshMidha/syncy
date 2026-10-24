@@ -263,6 +263,15 @@
       const { error } = await client.auth.updateUser({ password });
       if (error) throw error;
     },
+    async notion(action, fields = {}) {
+      const { data, error } = await client.functions.invoke('notion-projects', { body: { action, ...fields } });
+      if (error) {
+        let message = error.message;
+        try { message = (await error.context.json()).error || message; } catch { /* keep the SDK message */ }
+        throw new Error(message);
+      }
+      return data;
+    },
     async signOut() {
       const { error } = await client.auth.signOut();
       if (error) throw error;

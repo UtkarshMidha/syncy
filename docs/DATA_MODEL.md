@@ -1,6 +1,6 @@
 # Syncy — data model and sync (Phase 1 / Phase 2)
 
-> Decided 23 Oct: **Phase 1** stores everything in **Supabase** (events, projects, contacts). **Phase 2** adds Notion / notes-app sync.
+> Current: Supabase stores events, projects, and contacts. Users can connect Notion and copy project titles/descriptions into Syncy; Notion remains read-only from Syncy's perspective.
 > Schema: [supabase/migrations/0001_phase1_schema.sql](../supabase/migrations/0001_phase1_schema.sql) · Frontend mirror: [prototype/data.js](../prototype/data.js) (same tables, same column names).
 
 ## 1. Phase 1 flow
@@ -55,7 +55,7 @@ Dashboard: filter, sort, edit everything later (stage, project, next step, notes
 | description | text | **What the AI matches against** — one or two sentences of goals |
 | emoji | text | |
 | archived | bool | hidden from matching |
-| external_source, external_id, external_updated_at | | **Phase 2** sync keys (Notion page id …) |
+| external_source, external_id, external_updated_at | | Notion import source, page ID, and source edit time |
 
 ### `contacts`
 | Group | Columns |
@@ -91,17 +91,18 @@ Rules in the schema: one row per person per event (`unique (user_id, event_id, p
 | Pipeline badge ("Needs a note") | status |
 | Your notes | user_notes |
 
-## 5. Sync with Notion and other notes apps — Phase 2
+## 5. Notion projects — one-way import
 
-**Yes, it's possible.** Supabase stays the source of truth; external apps are connected in two directions.
+Supabase is the source of truth after import. Notion is read-only; project copies are used by the existing Syncy project matching and assignment flows.
 
 ### 5.1 Projects in (knowledge base → Supabase)
-1. User connects Notion with OAuth (Notion public integration) and picks the page or database that holds their projects.
-2. A Supabase **Edge Function** reads it with the Notion API and **upserts** into `projects` on `(user_id, external_source='notion', external_id=<page id>)`, storing Notion's `last_edited_time` in `external_updated_at`.
-3. Keep it fresh: Notion's integration webhooks (page changed → call our Edge Function) where available, otherwise **polling** every 10–15 min with `pg_cron`, fetching only pages edited since the last sync. Plus a manual "Refresh" button.
-4. Pages deleted in Notion → `archived = true` (contacts keep their link).
+1. User connects a Notion public integration with OAuth and shares a projects data source.
+2. A Supabase Edge Function lists accessible data sources and reads selected rows via Notion's API.
+3. Project title and description are copied into `projects` with `external_source='notion'`, the Notion page ID in `external_id`, and `last_edited_time` in `external_updated_at`.
+4. Importing again updates the same project row by Notion page ID, preserving the Syncy project UUID and contact links. Rows missing from Notion remain in Syncy.
+5. OAuth state and access/refresh tokens are stored in a service-role-only connection table; the browser never receives Notion tokens.
 
-### 5.2 Contacts out (Supabase → Notion)
+### 5.2 Contacts out (future; not implemented)
 1. A **database webhook** on `contacts` (insert / update where `status = 'saved'`) calls an Edge Function.
 2. It creates the Notion page the first time (`pages.create`, stores the id in `external_id`) and updates it afterwards (`pages.update`), then sets `external_synced_at`.
 3. Notion allows ~3 requests/second per integration, so writes go through a small queue table (or Supabase Queues) with retries.
@@ -119,4 +120,4 @@ Rules in the schema: one row per person per event (`unique (user_id, event_id, p
 | Evernote | Official API | Medium |
 | Apple Notes | **No public API**; only on-device via Shortcuts. Realistic option: share/export, not live sync | High / limited |
 
-Design rule for Phase 2: one connector interface per app — `pullProjects()` and `pushContact()` — so adding an app does not touch the screens or the schema.
+Automatic polling/webhooks, Notion deletions, contact write-back, and two-way conflict handling remain future work.

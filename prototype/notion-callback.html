@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connecting Notion · Syncy</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f3efe9; color: #1f1b17; font: 16px/1.5 system-ui, sans-serif; }
+    main { width: min(420px, calc(100% - 40px)); padding: 28px; border: 1px solid #ebe3d8; border-radius: 18px; background: #fffdf9; }
+    h1 { font-size: 22px; } p { color: #71695f; } a { color: #a8431a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="title">Connecting your Notion workspace…</h1>
+    <p id="message" role="status" aria-live="polite">Syncy is securely completing the connection.</p>
+    <a id="back" href="index.html?tab=projects" hidden>Return to Syncy Projects</a>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const message = document.getElementById('message');
+    const back = document.getElementById('back');
+    const fail = text => {
+      document.getElementById('title').textContent = 'Could not connect Notion';
+      message.textContent = text;
+      back.hidden = false;
+    };
+    (async () => {
+      if (params.has('error')) throw new Error(params.get('error_description') || 'Notion authorization was cancelled.');
+      const code = params.get('code'), state = params.get('state');
+      if (!code || !state) throw new Error('Notion did not return an authorization code. Start the connection again from Projects.');
+      if (!await db.init()) throw new Error('Your Syncy session expired. Sign in and connect Notion again.');
+      await db.notion('exchange', { code, state });
+      location.replace('index.html?tab=projects&notion=connected');
+    })().catch(error => fail(error.message || 'Notion connection failed.'));
+  </script>
+</body>
+</html>
