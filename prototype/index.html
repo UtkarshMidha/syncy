@@ -216,7 +216,10 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .orb { width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe2a6, var(--accent-2) 45%, var(--accent) 100%); animation: glow 1.6s ease-in-out infinite alternate; }
 @keyframes glow { from { box-shadow: 0 0 20px rgba(243, 163, 63, .4); transform: scale(.96); } to { box-shadow: 0 0 60px rgba(243, 163, 63, .8); transform: scale(1.04); } }
 .steps { list-style: none; padding: 0; margin: 28px 0 0; width: 100%; }
-.steps li { display: flex; align-items: center; gap: 12px; padding: 10px 4px; color: var(--muted); }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 10px 4px; color: var(--muted); animation: rise .45s ease both; }
+.steps li:nth-child(2) { animation-delay: .12s; }
+.steps li:nth-child(3) { animation-delay: .24s; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 .steps li .ic { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; font-size: 12px; }
 .steps li.doing { color: var(--ink); font-weight: 600; }
 .steps li.doing .ic { border-color: var(--accent); border-top-color: transparent; animation: spin .8s linear infinite; }
@@ -833,6 +836,23 @@ function procSteps(c) {
     c.project_set_by === 'user' ? 'Keeping the project you picked' : `Comparing with your ${projects().length} projects`,
     'Drafting a follow-up'];
 }
+// Live mode: real progress is unknown, so pace the checklist on a clock and
+// keep the last step spinning until the Edge Function comes back.
+const LIVE_STEP_MS = 2600;
+function animateLiveSteps() {
+  const lis = [...document.querySelectorAll('#steps li')];
+  if (!lis.length) return;
+  if (!ui.procT0) ui.procT0 = Date.now();
+  const paint = () => {
+    const k = Math.min(Math.floor((Date.now() - ui.procT0) / LIVE_STEP_MS), lis.length - 1);
+    lis.forEach((li, i) => {
+      li.className = i < k ? 'done' : i === k ? 'doing' : '';
+      li.querySelector('.ic').textContent = i < k ? '✓' : '';
+    });
+    if (k < lis.length - 1) { clearTimeout(ui.procTick); ui.procTick = later(paint, LIVE_STEP_MS - ((Date.now() - ui.procT0) % LIVE_STEP_MS) + 30); }
+  };
+  paint();
+}
 const AFTER = {
   scan() { if (db.live && !ui.justScanned && window.Html5Qrcode && !ui.scanner) startCameraScan(); },
   processing() {
@@ -840,6 +860,7 @@ const AFTER = {
       const c = db.get('contacts', ui.contactId);
       if (c?.status === 'processing') runLiveProcess();
       else if (c?.status === 'review') { ui.draft = c; ui.from = 'note'; replaceCurrentScreen('review'); }
+      animateLiveSteps();
       return;
     }
     const lis = [...document.querySelectorAll('#steps li')];
@@ -1101,6 +1122,7 @@ async function runLiveProcess() {
   const contactId = c.id, historyKey = history.state?.key, debugId = ui.voiceDebugId || (ui.voiceDebugId = crypto.randomUUID());
   const requestId = crypto.randomUUID();
   activeProcesses.set(contactId, requestId);
+  ui.procT0 = Date.now();
   try {
     window.syncyVoiceDebug(debugId, 'edge_function_call_started');
     const updated = await db.process(contactId, debugId);
