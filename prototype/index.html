@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#fffdf9">
+<meta name="theme-color" content="#fffcf7">
 <title>Syncy</title>
 <!--
   Phase 1 phone flow: choose / create event → scan → note → AI processing → review and save.
@@ -11,22 +11,24 @@
 -->
 <style>
 :root {
-  --bg: #f3efe9;
-  --phone: #fffdf9;
-  --ink: #1f1b17;
-  --muted: #71695f;
-  --line: #ebe3d8;
-  --card: #ffffff;
-  --accent: #e4602a;
-  --accent-2: #f3a33f;
-  --accent-soft: #fdede3;
-  --accent-ink: #a8431a;
-  --ok: #2c8a57;
-  --ok-soft: #e4f3ea;
+  --bg: #f3efe8;
+  --phone: #fffcf7;
+  --ink: #30281f;
+  --muted: #71685c;
+  --line: #e5dccf;
+  --card: #fffdf9;
+  --accent: #b95835;
+  --accent-hover: #98472e;
+  --accent-2: #c39858;
+  --accent-soft: #f5e9de;
+  --accent-ink: #8f472d;
+  --ok: #5f6f49;
+  --ok-soft: #e9efe1;
+  --danger: #a54739;
   --linkedin: #0a66c2;
   --xing: #026466;
-  --shadow: 0 1px 2px rgba(40, 28, 16, .05), 0 3px 8px rgba(40, 28, 16, .05);
-  --radius: 16px;
+  --shadow: 0 1px 2px rgba(48, 40, 31, .04), 0 5px 16px rgba(48, 40, 31, .045);
+  --radius: 14px;
   --ease-out: cubic-bezier(.23, 1, .32, 1);
   --ease-in-out: cubic-bezier(.77, 0, .175, 1);
   --ease-drawer: cubic-bezier(.32, .72, 0, 1);
@@ -35,62 +37,80 @@
 html, body { margin: 0; height: 100%; }
 html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; overscroll-behavior: none; }
 body {
+  min-height: 100dvh;
   background: var(--bg);
   color: var(--ink);
-  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-  display: flex; align-items: center; justify-content: center; gap: 48px;
-  padding: 24px;
+  font: 15.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); align-items: stretch;
+  gap: clamp(24px, 3vw, 44px); padding: 28px clamp(24px, 3.5vw, 56px);
 }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 a { touch-action: manipulation; }
 input, textarea, select { font: inherit; color: inherit; }
-:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+.screen.dark :focus-visible { outline-color: var(--accent-2); }
 
 /* ---------- desktop side panel ---------- */
-.side { max-width: 300px; }
-.side h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.02em; }
+.side { width: 100%; max-width: 300px; align-self: center; }
+.side h1 { font-size: clamp(26px, 2.2vw, 32px); line-height: 1.18; margin: 0 0 8px; letter-spacing: -.035em; }
 .side p { color: var(--muted); margin: 0 0 18px; }
 .side ol { padding: 0; margin: 0 0 20px; list-style: none; counter-reset: s; }
 .side li { counter-increment: s; display: flex; gap: 10px; align-items: baseline; padding: 6px 0; color: var(--muted); }
 .side li::before { content: counter(s); width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--line); color: var(--ink); font-size: 12px; font-weight: 600; display: grid; place-items: center; transform: translateY(4px); }
 .side li.on { color: var(--ink); font-weight: 600; }
 .side li.on::before { background: var(--accent); color: #fff; }
-.side .note { font-size: 13px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--muted); }
+.side .note { font-size: 13px; background: var(--phone); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; color: var(--muted); }
 .side .links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 
-/* ---------- phone frame ---------- */
+/* ---------- responsive app workspace ---------- */
 .phone {
-  width: 390px; height: 844px; max-height: calc(100vh - 48px);
-  background: var(--phone); border-radius: 46px; overflow: hidden;
-  box-shadow: 0 0 0 11px #1f1b17, 0 30px 70px rgba(0, 0, 0, .28);
+  width: 100%; min-width: 0; height: calc(100dvh - 56px); max-height: 1100px;
+  background: var(--phone); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow);
   display: flex; flex-direction: column; position: relative;
 }
-@media (max-width: 820px) {
-  body { padding: 0; display: block; }
-  .side { display: none; }
-  .phone { width: 100%; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; }
-}
-.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: max(24px, calc(12px + env(safe-area-inset-top))) 18px max(24px, env(safe-area-inset-bottom)); scrollbar-width: none; }
+.screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 30px clamp(22px, 4vw, 48px); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.screen > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.screen-loading { min-height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--muted); text-align: center; }
+.screen-loading .spinner { width: 36px; height: 36px; border-width: 3px; }
 .screen::-webkit-scrollbar { display: none; }
 .screen.dark { background: #15120f; color: #fff; }
 
+@media (max-width: 1200px) {
+  body { display: block; padding: 0; }
+  .side { display: none; }
+  .phone { width: 100%; height: 100dvh; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
+  .screen { padding: 28px clamp(20px, 4vw, 48px); }
+}
+@media (max-width: 820px) {
+  .screen { padding: max(22px, calc(12px + env(safe-area-inset-top))) 18px max(24px, env(safe-area-inset-bottom)); scrollbar-width: none; }
+}
+
 /* ---------- tab bar ---------- */
-.tabbar { flex: none; display: flex; border-top: 1px solid var(--line); padding: 8px 8px max(22px, calc(8px + env(safe-area-inset-bottom))); background: var(--phone); }
-.tabbar button, .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); padding: 4px 0; text-decoration: none; }
-.tabbar button.on { color: var(--accent-ink); font-weight: 600; }
-.tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tabbar { order: -1; flex: none; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding: 10px 24px; background: var(--phone); }
+.tabbar button, .tabbar a { flex: none; min-height: 44px; display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 8px 14px; border-radius: 10px; text-decoration: none; }
+.tabbar button.on { color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; }
+.tabbar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 1200px) { .tabbar { position: sticky; top: 0; z-index: 12; } }
+@media (max-width: 820px) {
+  .tabbar { order: 0; position: static; border-top: 1px solid var(--line); border-bottom: 0; padding: 8px 8px max(22px, calc(8px + env(safe-area-inset-bottom))); }
+  .tabbar button, .tabbar a { flex: 1; min-height: 44px; flex-direction: column; gap: 2px; padding: 4px 0; border-radius: 8px; font-size: 11px; }
+  .tabbar button.on { background: transparent; }
+  .tabbar svg { width: 24px; height: 24px; }
+}
 
 /* ---------- common ---------- */
 .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; }
 .logo { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-2); }
-.title { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 4px; }
+.title { font-size: clamp(24px, 2.3vw, 32px); font-weight: 700; letter-spacing: -.035em; line-height: 1.18; margin: 4px 0 8px; }
 .sub { color: var(--muted); margin: 0 0 16px; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: none; }
 .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 8px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 14px; font-weight: 600; background: #f1ebe3; text-decoration: none; color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 10px; font-weight: 600; background: #eee8de; text-decoration: none; color: var(--ink); }
+.btn svg, .pchip svg, .linkbtn svg, .seg svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-block { width: 100%; }
 .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
@@ -99,7 +119,7 @@ input, textarea, select { font: inherit; color: inherit; }
 .dark .icon-btn { background: rgba(255, 255, 255, .12); color: #fff; }
 .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
-.pill.grey { background: #f1ebe3; color: var(--muted); }
+.pill.grey { background: #eee8de; color: var(--muted); }
 .src { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: #fff; font-size: 11px; font-weight: 800; flex: none; }
 a.src { text-decoration: none; }
 .ptag { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 5px; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .02em; flex: none; }
@@ -112,18 +132,18 @@ a.src { text-decoration: none; }
 .field { display: block; margin-top: 12px; }
 .field > span { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
 textarea.edit, input.edit, select.edit { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; resize: vertical; }
-textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid var(--accent-2); border-color: transparent; }
+textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid var(--accent-ink); border-color: transparent; }
 .row { display: flex; gap: 8px; }
 .row > * { flex: 1; }
 .empty { text-align: center; color: var(--muted); padding: 22px 10px; border: 1.5px dashed var(--line); border-radius: var(--radius); }
 
 /* ---------- event picker ---------- */
-.ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; }
+.ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); transition: background-color .15s, border-color .15s; }
 .ev-option .ev-select { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 0; text-align: left; }
 .ev-del { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); background: #f6f1ea; font-size: 12px; }
-@media (hover: hover) and (pointer: fine) { .ev-del:hover { color: #b42318; background: #fdebe8; } }
+@media (hover: hover) and (pointer: fine) { .ev-del:hover { color: var(--danger); background: var(--accent-soft); } }
 .ev-option .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
-.ev-option.on { border-color: var(--accent); background: #fff8f2; }
+.ev-option.on { border-color: var(--accent); background: var(--accent-soft); }
 .ev-option.on .radio { border-color: var(--accent); }
 .ev-option.on .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 .ev-option .meta { flex: 1; min-width: 0; }
@@ -139,12 +159,12 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .ev-url a { color: #ffd9a0; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ev-url a:hover { text-decoration: underline; }
 .ev-url button { color: #d9c9b8; font-size: 12.5px; text-decoration: underline; }
-.url-error { color: #c2372b; font-size: 12.5px; min-height: 0; margin-top: 4px; }
+.url-error { color: var(--danger); font-size: 12.5px; min-height: 0; margin-top: 4px; }
 .stick-bottom { position: sticky; bottom: -24px; margin: 16px -18px -24px; padding: 12px 18px 18px; background: linear-gradient(180deg, rgba(255, 253, 249, 0), var(--phone) 30%); }
 
 /* ---------- event home ---------- */
 .event { display: flex; gap: 12px; align-items: center; background: #2a221b; color: #fff; border-radius: var(--radius); padding: 14px; }
-.event .dot { width: 10px; height: 10px; border-radius: 50%; background: #5be38f; box-shadow: 0 0 0 4px rgba(91, 227, 143, .25); flex: none; }
+.event .dot { width: 10px; height: 10px; border-radius: 50%; background: #aab88a; box-shadow: 0 0 0 4px rgba(170, 184, 138, .2); flex: none; }
 .event small { color: #d9c9b8; }
 .event .leave { margin-left: auto; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255, 255, 255, .14); padding: 6px 10px; border-radius: 10px; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
@@ -155,7 +175,8 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .scan-cta svg { width: 40px; height: 40px; flex: none; }
 .scan-cta b { font-size: 17px; display: block; }
 .scan-cta small { opacity: .9; }
-.person { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin-bottom: 8px; width: 100%; text-align: left; cursor: pointer; }
+.person { display: flex; gap: 12px; align-items: flex-start; padding: 12px 4px; margin-bottom: 0; width: 100%; text-align: left; cursor: pointer; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+@media (hover: hover) and (pointer: fine) { .person:hover:not(.selected) { background: #f8f4ed; } }
 .person .meta { flex: 1; min-width: 0; }
 .person .name { font-weight: 650; display: flex; align-items: center; gap: 6px; }
 .person .role { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -165,10 +186,10 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .person[data-cid] { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .drag-ghost { position: fixed; left: 0; top: 0; z-index: 99; margin: 0; opacity: .94; box-shadow: 0 14px 32px rgba(40, 28, 16, .25); pointer-events: none; }
 .drag-src { opacity: .35; }
-.dropzone { border-radius: 14px; }
+.dropzone { border-radius: 12px; margin-bottom: 12px; }
 .dropzone.over { outline: 2px dashed var(--accent-2); outline-offset: 3px; background: var(--accent-soft); }
 .sel-dot { flex: none; width: 22px; height: 22px; margin-top: 6px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; color: #fff; background: #fff; }
-.person.selected { outline: 2px solid var(--accent-2); }
+.person.selected { outline: 2px solid var(--accent-2); outline-offset: -2px; background: var(--accent-soft); }
 .person.selected .sel-dot { background: var(--accent-2); border-color: var(--accent-2); }
 .assignbar { position: sticky; bottom: 6px; z-index: 5; margin-top: 14px; padding: 12px; box-shadow: 0 -4px 18px rgba(40, 28, 16, .10), var(--shadow); }
 
@@ -187,9 +208,9 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .viewfinder .qr { width: 140px; height: 140px; border-radius: 8px; opacity: .2; filter: blur(2px); transition: opacity .35s var(--ease-out), filter .35s var(--ease-out); }
 .viewfinder.hit .qr { opacity: 1; filter: none; }
 .viewfinder.hit .line { display: none; }
-.viewfinder.hit .corner { border-color: #5be38f; }
+.viewfinder.hit .corner { border-color: #c0cba2; }
 .detected { text-align: center; min-height: 54px; font-size: 14px; }
-.detected .ok { color: #5be38f; font-weight: 700; }
+.detected .ok { color: #c0cba2; font-weight: 700; }
 .detected code { font-size: 12.5px; color: #e8dccf; }
 .saved-row { margin: 8px auto 0; max-width: 300px; text-align: left; font-size: 12.5px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; padding: 8px 10px; color: #e8dccf; }
 .saved-row div { display: flex; justify-content: space-between; gap: 10px; }
@@ -209,18 +230,18 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 /* ---------- note ---------- */
 .linkchip { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #f6f1ea; font-size: 13px; }
 .linkchip code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #f1ebe3; padding: 4px; border-radius: 14px; margin: 12px 0 10px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #eee8de; padding: 4px; border-radius: 12px; margin: 12px 0 10px; }
 .seg button { padding: 9px 8px; border-radius: 11px; font-weight: 600; color: var(--muted); }
-.seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(48, 40, 31, .08); }
 .prompts { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
 .prompts span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .linkbtn { font-size: 13px; font-weight: 600; color: var(--accent-ink); }
 .mic-wrap { display: flex; flex-direction: column; align-items: center; margin: 10px 0 8px; }
 .mic { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--accent); }
 .mic svg { width: 36px; height: 36px; }
-.mic.rec { background: #d93a2b; animation: pulse 1.4s ease-out infinite; }
+.mic.rec { background: var(--danger); animation: pulse 1.4s ease-out infinite; }
 .mic.rec .stopicon { width: 28px; height: 28px; border-radius: 6px; background: #fff; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(217, 58, 43, .45); } 100% { box-shadow: 0 0 0 26px rgba(217, 58, 43, 0); } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(165, 71, 57, .35); } 100% { box-shadow: 0 0 0 24px rgba(165, 71, 57, 0); } }
 .timer { font-variant-numeric: tabular-nums; font-weight: 600; margin-top: 10px; }
 .wave { display: flex; gap: 3px; align-items: center; height: 34px; margin-top: 6px; }
 .wave i { width: 4px; border-radius: 2px; background: var(--accent); height: 6px; transition: height .12s; }
@@ -248,7 +269,7 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .who .avatar { width: 54px; height: 54px; font-size: 18px; }
 .who .n { font-size: 19px; font-weight: 700; }
 .who .r { color: var(--muted); font-size: 13.5px; }
-.match { border: 1px solid var(--line); border-left: 3px solid var(--accent-2); background: #fffaf5; border-radius: 12px; padding: 14px; margin-top: 14px; }
+.match { border: 1px solid var(--line); border-left: 3px solid var(--accent-2); background: #f8f2e8; border-radius: 12px; padding: 14px; margin-top: 14px; }
 .match .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .match .reason { font-size: 13.5px; margin-top: 8px; }
 ul.bul { margin: 0; padding-left: 18px; }
@@ -270,7 +291,7 @@ ul.bul li { margin: 3px 0; }
 
 /* ---------- projects ---------- */
 .proj-card, .projects-import { margin-bottom: 10px; }
-.proj-card.display { padding: 12px; }
+.proj-card.display { padding: 12px; box-shadow: none; }
 .proj-card .ph { display: flex; gap: 8px; align-items: center; font-weight: 700; }
 .proj-card .ph > span:nth-child(2) { overflow-wrap: anywhere; }
 .proj-card .emoji { width: 36px; height: 36px; border-radius: 10px; background: #f6f1ea; display: grid; place-items: center; font-size: 18px; }
@@ -279,7 +300,7 @@ ul.bul li { margin: 3px 0; }
 .proj-actions { display: flex; gap: 8px; flex: none; }
 .proj-action { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #f1ebe3; }
 .proj-action svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.proj-action.delete { color: #b42318; }
+.proj-action.delete { color: var(--danger); }
 .faces { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .proj-card.display { cursor: pointer; }
 .proj-card .faces { gap: 0; }
@@ -298,16 +319,16 @@ details.card > summary { min-height: 44px; display: flex; align-items: center; }
 .btn, .scan-cta, .icon-btn, .chip, .proj-action, .seg button, .urlrow button, .tabbar button, .tabbar a, .pchip { transition: background-color .15s, color .15s, border-color .15s; }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled), .icon-btn:hover, .proj-action:hover, .chip:hover:not(:disabled), .pchip:hover, .seg button:hover, .tabbar button:hover, .tabbar a:hover { background-color: #eee7de; }
-  .btn-primary:hover:not(:disabled), .scan-cta:hover { background-color: #c94f21; }
+  .btn-primary:hover:not(:disabled), .scan-cta:hover { background-color: var(--accent-hover); }
   .proj-card.display:hover { border-color: #d8c7b5; }
 }
 
 /* ---------- toasts (Sonner-style: transitions, not keyframes; interruptible) ---------- */
-.toasts { position: absolute; left: 14px; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 60; }
+.toasts { position: absolute; left: 14px; right: 14px; bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 60; }
 .toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 100%; background: #241f1a; color: #fff; font-size: 13.5px; font-weight: 500; line-height: 1.4; padding: 10px 15px; border-radius: 14px; box-shadow: 0 8px 26px rgba(0, 0, 0, .28); transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
 .toast::before { font-weight: 800; flex: none; }
-.toast.success::before { content: '✓'; color: #7ce0a3; }
-.toast.error::before { content: '!'; color: #ffb3a7; }
+.toast.success::before { content: '✓'; color: #c7d1ad; }
+.toast.error::before { content: '!'; color: #e6ad9d; }
 .toast[data-state="pre"] { opacity: 0; transform: translateY(14px) scale(.97); }
 .toast[data-state="out"] { opacity: 0; transform: translateY(8px) scale(.97); transition-duration: .2s; }
 
@@ -323,7 +344,13 @@ details.card > summary { min-height: 44px; display: flex; align-items: center; }
 .sheet h3 { margin: 0 0 4px; font-size: 16.5px; letter-spacing: -.01em; overflow-wrap: anywhere; }
 .sheet p { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
 .sheet .btn { width: 100%; margin-top: 8px; }
-.btn-danger { background: #d93a2b; color: #fff; box-shadow: 0 6px 16px rgba(217, 58, 43, .3); }
+.btn-danger { background: var(--danger); color: #fff; }
+@media (min-width: 821px) {
+  .sheet-wrap { display: grid; place-items: center; padding: 24px; }
+  .sheet { position: relative; left: auto; right: auto; bottom: auto; width: min(420px, 100%); border-radius: 18px; transform: translateY(12px) scale(.98); box-shadow: 0 16px 40px rgba(48, 40, 31, .18); }
+  .sheet-wrap.open .sheet { transform: none; }
+}
+@media (max-width: 820px) { .toasts { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); } }
 @media (max-width: 760px) {
   input, textarea, select { font-size: 16px; }
 }
@@ -353,7 +380,7 @@ details.card > summary { min-height: 44px; display: flex; align-items: center; }
 </aside>
 
 <div class="phone">
-  <main class="screen" id="screen"></main>
+  <main class="screen" id="screen"><div class="screen-loading" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span>Connecting to your workspace…</span></div></main>
   <nav class="tabbar" id="tabbar"></nav>
 </div>
 
@@ -447,7 +474,7 @@ const PERSONAS = [
 ];
 const personaFor = url => PERSONAS.find(p => parseProfile(p.url).profile_url === url);
 
-const COLORS = ['#e4602a', '#2c8a57', '#0a66c2', '#7a4bc0', '#c2410c', '#0f766e'];
+const COLORS = ['#9f4d32', '#566545', '#765c42', '#8b6939', '#67574a', '#59645a'];
 const STAGE_LABEL = { to_follow_up: 'To follow up', followed_up: 'Followed up', meeting_set: 'Meeting set', won: 'Won', not_relevant: 'Not relevant' };
 
 let ui;
@@ -518,12 +545,14 @@ function qrSvg(seed) {
 
 // Navigation icons use a consistent outline style across tabs.
 const ICONS = {
-  today: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>',
-  contacts: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>',
-  projects: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>',
-  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
-  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>',
-  dash: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>',
+  today: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>',
+  contacts: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>',
+  projects: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>',
+  qr: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
+  mic: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>',
+  note: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h8l4 4V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z"/><path d="M14 3.5v5h5M8.5 13h7M8.5 17h7"/></svg>',
+  spark: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>',
+  dash: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>',
 };
 
 // ---------- navigation ----------
@@ -661,7 +690,7 @@ function personRow(c, assignable) {
   const checked = selecting && ui.sel.includes(c.id);
   const act = selecting ? `toggleSel('${c.id}')` : `openContact('${c.id}')`;
   const status = c.status === 'captured'
-    ? '<span class="pill">✍️ Needs a note</span>'
+    ? '<span class="pill">Needs a note</span>'
     : `${p ? `<span class="pill grey">${projTag(p)} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill grey">No project</span>'}${c.next_step ? `<span class="pill grey">→ ${esc(c.next_step)}${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</span>` : ''}`;
   return `<div class="card person${checked ? ' selected' : ''}"${assignable && !selecting ? ` data-cid="${c.id}"` : ''} role="button" tabindex="0" aria-label="${esc(c.name || c.profile_slug)}" onclick="${act}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();${act}}">
     ${selecting ? `<span class="sel-dot">${checked ? '✓' : ''}</span>` : ''}
@@ -786,14 +815,14 @@ const SCREENS = {
       <div class="linkchip">${srcBadge(c.source, c.profile_url)}<code>${esc(c.profile_url)}</code><span class="pill ok">✓ saved</span></div>
       <div class="label">Which project is ${esc((c.name || 'this person').split(' ')[0])} for? <span class="ai">optional</span></div>
       <div class="pchips" id="pchips">
-        <button class="pchip ${c.project_set_by === 'user' ? '' : 'on'}" data-id="" onclick="pickProject('')">✨ Let AI suggest</button>
+        <button class="pchip ${c.project_set_by === 'user' ? '' : 'on'}" data-id="" onclick="pickProject('')">${ICONS.spark} Let AI suggest</button>
         ${projects().map(p => `<button class="pchip ${c.project_set_by === 'user' && c.project_id === p.id ? 'on' : ''}" data-id="${p.id}" onclick="pickProject('${p.id}')">${projTag(p)} ${esc(p.name)}</button>`).join('')}
         <button class="pchip ${c.project_set_by === 'user' && !c.project_id ? 'on' : ''}" data-id="none" onclick="pickProject('none')">No project</button>
       </div>
       <div class="title" style="margin-top:14px">How did it go with ${esc((c.name || 'them').split(' ')[0])}?</div>
       <div class="seg" role="tablist">
-        <button class="${textMode ? '' : 'on'}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">🎙️ Voice memo</button>
-        <button class="${textMode ? 'on' : ''}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('text')">✍️ Write a note</button>
+        <button class="${textMode ? '' : 'on'}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('voice')">${ICONS.mic} Voice memo</button>
+        <button class="${textMode ? 'on' : ''}" ${modeBusy ? 'disabled' : ''} onclick="setNoteMode('text')">${ICONS.note} Write a note</button>
       </div>
       <div class="prompts"><span>Who are they?</span><span>What do they need?</span><span>What did you agree?</span></div>
       ${textMode ? `
@@ -809,13 +838,13 @@ const SCREENS = {
         ${voiceBusy ? '' : `<div class="card transcript">${voiceDone
           ? `<div class="label" style="margin-top:0">Transcript <span class="ai">edit if needed</span></div>
              <textarea class="edit" rows="6" oninput="ui.noteText=this.value;document.getElementById('procBtn').disabled=!this.value.trim()">${esc(ui.noteText)}</textarea>`
-          : voiceFailed ? `<span style="color:#b42318">${esc(ui.error || 'Transcription failed. Record again and retry.')}</span>`
+          : voiceFailed ? `<span style="color:var(--danger)">${esc(ui.error || 'Transcription failed. Record again and retry.')}</span>`
           : `<span class="${r.status === 'recording' ? '' : 'muted'}" id="txlive">${r.status === 'recording' ? 'Recording audio…' : 'Tap the microphone to record.'}</span>${r.status === 'recording' ? '<span class="caret"></span>' : ''}`}
         </div>`}
         ${voiceDone || voiceFailed ? `<button class="linkbtn" style="margin-top:6px" onclick="rerecord()">↺ Record again</button>` : ''}`}
       <div class="row" style="margin-top:16px">
         <button class="btn" style="flex:0 0 auto" ${voiceBusy ? 'disabled' : ''} onclick="go('today')">Later</button>
-        <button class="btn btn-primary" id="procBtn" ${canProcess || alreadyProcessed ? '' : 'disabled'} onclick="${alreadyProcessed ? `openContact('${c.id}')` : 'processNote()'}">${processPending ? 'Processing…' : alreadyProcessed ? (c.status === 'saved' ? 'View contact' : 'View insights') : '✨ Process'}</button>
+        <button class="btn btn-primary" id="procBtn" ${canProcess || alreadyProcessed ? '' : 'disabled'} onclick="${alreadyProcessed ? `openContact('${c.id}')` : 'processNote()'}">${processPending ? 'Processing…' : alreadyProcessed ? (c.status === 'saved' ? 'View contact' : 'View insights') : `${ICONS.spark} Process`}</button>
       </div>
       <p class="muted small" style="margin-top:8px">“Later” keeps ${esc((c.name || 'the contact').split(' ')[0])} on your list with a “Needs a note” badge.</p>`;
   },
@@ -860,7 +889,7 @@ const SCREENS = {
         <label class="field"><span>Role</span><input class="edit" value="${esc(d.role)}" placeholder="—" oninput="ui.draft.role=this.value"></label>
         <label class="field"><span>Company</span><input class="edit" value="${esc(d.company)}" placeholder="—" oninput="ui.draft.company=this.value"></label>
       </div>
-      <label class="field"><span>Summary ✨</span><textarea class="edit" rows="2" oninput="ui.draft.summary=this.value">${esc(d.summary)}</textarea></label>
+      <label class="field"><span>Summary <span class="ai">AI · editable</span></span><textarea class="edit" rows="2" oninput="ui.draft.summary=this.value">${esc(d.summary)}</textarea></label>
       <label class="field"><span>What you talked about (one per line, max 3)</span><textarea class="edit" rows="3" oninput="ui.draft.discussed=this.value.split('\\n').map(s=>s.trim()).filter(Boolean).slice(0,3)">${esc((d.discussed || []).join('\n'))}</textarea></label>
       <div class="row">
         <label class="field" style="flex:1.4"><span>Next step</span><input class="edit" value="${esc(d.next_step)}" oninput="ui.draft.next_step=this.value"></label>
@@ -895,7 +924,7 @@ const SCREENS = {
     if (!c) return `<div class="title">Contact unavailable</div><p class="sub">This contact may have been deleted.</p><button class="btn" onclick="go(ui.tab)">Back to contacts</button>`;
     const p = proj(c.project_id), ev = event(c.event_id);
     return `
-      <div class="flowbar"><button class="icon-btn" onclick="go(ui.tab)">‹</button><span class="step">${ev ? esc(ev.name) : ''}</span><span><button class="btn btn-sm" onclick="editContact()">Edit</button> <button class="btn btn-sm" style="color:#b42318" onclick="deleteCurrentContact()">Delete</button></span></div>
+      <div class="flowbar"><button class="icon-btn" onclick="go(ui.tab)">‹</button><span class="step">${ev ? esc(ev.name) : ''}</span><span><button class="btn btn-sm" onclick="editContact()">Edit</button> <button class="btn btn-sm" style="color:var(--danger)" onclick="deleteCurrentContact()">Delete</button></span></div>
       <div class="who">${avatar(c.name, 54)}<div style="flex:1"><div class="n">${esc(c.name)}</div><div class="r">${esc([c.role, c.company].filter(Boolean).join(' · '))}</div></div>${srcBadge(c.source, c.profile_url)}</div>
       <div class="linkchip" style="margin-top:12px">${srcBadge(c.source, c.profile_url)}<code>${esc(c.profile_url)}</code></div>
       <div class="match"><div class="muted small">Project</div>
@@ -938,7 +967,7 @@ function eventPicker() {
       <button type="button" class="ev-select" aria-pressed="${ui.pickId === e.id}" onclick="ui.pickId='${e.id}';ui.eventForm=null;render()"><span class="radio"></span>
       <span class="meta"><b>${esc(e.name)}${e.starts_on === db.TODAY ? '<span class="today">Today</span>' : ''}</b>
       <span class="muted small">${esc(e.location || '')}${e.location ? ' · ' : ''}${fmtDate(e.starts_on)} · ${counts[e.id] || 0} people</span>
-      ${e.url ? `<span class="ev-link">🔗 ${esc(urlHost(e.url))}</span>` : ''}</span></button>
+      ${e.url ? `<span class="ev-link">${esc(urlHost(e.url))} ↗</span>` : ''}</span></button>
       <button type="button" class="ev-del" aria-label="Remove ${esc(e.name)} from the event picker" title="Removes the event from this list only — it stays in your dashboard with all its contacts" onclick="ui.evConfirm='${e.id}';render()">✕</button></div>
       ${ui.evConfirm === e.id ? `<div class="new-event" style="border-style:solid">
         <b>Remove “${esc(e.name)}” from this list?</b>
@@ -959,7 +988,7 @@ function eventHome() {
     <div class="top"><div class="brand"><span class="logo"></span>Syncy</div><span style="display:flex;gap:8px"><a class="icon-btn" href="dashboard.html" title="Dashboard" style="text-decoration:none">▦</a><button class="icon-btn" type="button" aria-label="Sign out" title="Sign out" onclick="signOut()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v8"/><path d="M18.36 6.64a9 9 0 1 1-12.72 0"/></svg></button></span></div>
     <div class="event"><span class="dot"></span><div style="min-width:0">You're at <b>${esc(ev.name)}</b><br><small>${esc(ev.location || '')}${ev.location ? ' · ' : ''}${fmtDate(ev.starts_on)}</small>
       ${ev.url && !ui.editUrl
-        ? `<div class="ev-url"><a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(urlHost(ev.url))} ↗</a><button onclick="ui.editUrl=true;render()">Edit</button></div>`
+        ? `<div class="ev-url"><a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(urlHost(ev.url))} ↗</a><button onclick="ui.editUrl=true;render()">Edit</button></div>`
         : ui.editUrl ? '' : `<div class="ev-url"><button onclick="ui.editUrl=true;render();document.getElementById('evUrlEdit').focus()">＋ Add event link</button></div>`}</div>
       <button class="leave" onclick="leaveEvent()">Leave</button></div>
     ${ui.editUrl ? `<div class="card" style="margin-top:8px">

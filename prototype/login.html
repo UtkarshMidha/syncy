@@ -3,31 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3efe8">
   <title>Sign in · Syncy</title>
   <style>
-    :root { color-scheme: light; --ink:#201a16; --muted:#756a61; --line:#e9ded2; --accent:#e4602a; --paper:#fffdfa; }
+    :root { color-scheme: light; --ink:#30281f; --muted:#71685c; --line:#e5dccf; --accent:#b95835; --accent-hover:#98472e; --accent-ink:#8f472d; --accent-2:#c39858; --paper:#fffcf7; --soft:#eee8de; --danger:#a54739; }
     * { box-sizing:border-box }
-    body { margin:0; min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px; background:#f5f0e9; color:var(--ink); font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
-    .card { width:min(100%,440px); padding:30px; background:var(--paper); border:1px solid var(--line); border-radius:16px; box-shadow:0 3px 12px #3b27100d }
+    body { margin:0; min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px; background:#f3efe8; color:var(--ink); font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+    .card { width:min(100%,440px); padding:30px; background:var(--paper); border:1px solid var(--line); border-radius:14px; box-shadow:0 5px 16px #30281f0b }
     .brand { display:flex; align-items:center; gap:10px; margin-bottom:26px; font-weight:750; font-size:20px }
-    .logo { width:18px; height:18px; border-radius:50%; background:#f3a33f }
+    .logo { width:18px; height:18px; border-radius:50%; background:var(--accent-2) }
     h1 { margin:0; font-size:27px; letter-spacing:-.03em }
     .sub { margin:7px 0 22px; color:var(--muted) }
     label { display:block; margin:14px 0 6px; font-size:13px; font-weight:650 }
     input { width:100%; min-height:48px; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:white; color:var(--ink); font:inherit }
     input:focus { border-color:var(--accent) }
-    :focus-visible { outline:3px solid #f3a33f; outline-offset:2px }
-    button { width:100%; min-height:48px; padding:11px 14px; border:0; border-radius:10px; background:#f1ebe3; color:var(--ink); font:inherit; font-weight:650; cursor:pointer; transition:background-color .15s,color .15s }
-    button:hover:not(:disabled) { background:#e9e1d7 }
+    :focus-visible { outline:3px solid var(--accent-ink); outline-offset:2px }
+    button { width:100%; min-height:48px; padding:11px 14px; border:0; border-radius:10px; background:var(--soft); color:var(--ink); font:inherit; font-weight:650; cursor:pointer; transition:background-color .15s,color .15s }
+    button:hover:not(:disabled) { background:#e7dfd3 }
     button:disabled { opacity:.6; cursor:wait }
     .primary { margin-top:18px; background:var(--accent); color:white }
-    .primary:hover:not(:disabled) { background:#c94f21 }
+    .primary:hover:not(:disabled) { background:var(--accent-hover) }
     .google { margin-top:12px; background:white; border:1px solid var(--line) }
-    .google:hover:not(:disabled) { background:#faf6f0 }
+    .google:hover:not(:disabled) { background:#f5f0e7 }
     .links { display:flex; justify-content:space-between; gap:12px; margin-top:14px }
-    .link { width:auto; min-height:44px; padding:8px 0; background:none; color:#b64a20; font-size:13px }
+    .link { width:auto; min-height:44px; padding:8px 0; background:none; color:var(--accent-ink); font-size:13px }
     .status { min-height:24px; margin:12px 0 0; color:var(--muted); font-size:13px; overflow-wrap:anywhere }
-    .status.error { color:#b42318 }
+    .status.error { color:var(--danger) }
     .divider { display:flex; align-items:center; gap:12px; margin:16px 0 2px; color:var(--muted); font-size:12px }
     .divider:before,.divider:after { content:""; height:1px; flex:1; background:var(--line) }
     [hidden] { display:none !important }
