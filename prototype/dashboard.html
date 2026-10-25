@@ -33,13 +33,14 @@
   --ease-drawer: cubic-bezier(.32, .72, 0, 1);
   --linkedin: #0a66c2;
   --xing: #026466;
-  --shadow: 0 1px 2px rgba(40, 28, 16, .06), 0 6px 18px rgba(40, 28, 16, .07);
+  --shadow: 0 1px 2px rgba(40, 28, 16, .05), 0 3px 8px rgba(40, 28, 16, .05);
   --radius: 14px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
-body { background: var(--bg); color: var(--ink); font: 14.5px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
 button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
 html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
 button { cursor: pointer; border: 0; background: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 a { touch-action: manipulation; }
@@ -49,8 +50,9 @@ a { touch-action: manipulation; }
 /* ---------- sidebar ---------- */
 .side { background: #1f1b17; color: #efe6db; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100dvh; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; margin: 0 8px 22px; color: #fff; }
-.logo { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd27a, var(--accent-2) 45%, var(--accent) 100%); box-shadow: 0 0 14px rgba(243, 163, 63, .6); }
+.logo { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-2); }
 .nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: #cbbfb1; text-decoration: none; text-align: left; }
+.nav svg { width: 18px; height: 18px; flex: none; }
 @media (hover: hover) and (pointer: fine) { .nav:hover { background: rgba(255, 255, 255, .06); color: #fff; } }
 .nav.on { background: rgba(255, 255, 255, .1); color: #fff; font-weight: 600; }
 .nav .count { margin-left: auto; font-size: 12px; color: #a99c8d; }
@@ -62,22 +64,7 @@ a { touch-action: manipulation; }
 .head h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
 .head p { margin: 4px 0 0; color: var(--muted); }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-weight: 600; background: var(--grey-soft); text-decoration: none; color: var(--ink); }
-.btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .28); }
-
-/* ---------- glossy UI ---------- */
-.btn-primary { position: relative; overflow: hidden; }
-.btn-primary::before {
-  content: ''; position: absolute; left: 2px; right: 2px; top: 2px; height: 48%; pointer-events: none;
-  border-radius: inherit; border-bottom-left-radius: 50% 35%; border-bottom-right-radius: 50% 35%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .07));
-}
-.avatar { position: relative; overflow: hidden; }
-.avatar::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(130% 80% at 30% 15%, rgba(255, 255, 255, .6), rgba(255, 255, 255, .14) 40%, rgba(255, 255, 255, 0) 62%),
-    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(0, 0, 0, .1));
-}
-.stat { background: linear-gradient(180deg, #fff 0%, #fdf8f1 100%); }
+.btn-primary { background: var(--accent); color: #fff; }
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 12px; margin: 20px 0 18px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; text-align: left; box-shadow: var(--shadow); transition: transform .12s, border-color .12s; }
@@ -89,7 +76,7 @@ a { touch-action: manipulation; }
 .bars { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; }
 .bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12.5px; align-items: center; }
 .bar .track { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--grey-soft); overflow: hidden; }
-.bar .fill { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.bar .fill { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
 
 /* ---------- toolbar ---------- */
 .toolbar { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; box-shadow: var(--shadow); }
@@ -163,7 +150,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .label .ai { text-transform: none; letter-spacing: 0; color: var(--accent); font-weight: 600; }
 .label .label-actions { display: inline-flex; align-items: center; gap: 10px; }
 .box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.match { border: 1.5px solid var(--accent-2); background: linear-gradient(180deg, #fff8ef, #fff); border-radius: 12px; padding: 12px 14px; }
+.match { border: 1px solid var(--line); border-left: 3px solid var(--accent-2); background: #fffaf5; border-radius: 12px; padding: 12px 14px; }
 .match .reason { margin-top: 8px; font-size: 13.5px; }
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .seg button { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); }
@@ -186,8 +173,19 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 
 /* ---------- mobile app navigation ---------- */
 .mobile-nav { display: none; }
+.load-state { min-height: 100dvh; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 24px; color: var(--muted); }
+.loader { width: 18px; height: 18px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: load-spin .8s linear infinite; }
+@keyframes load-spin { to { transform: rotate(360deg); } }
 
 /* ---------- responsive ---------- */
+@media (max-width: 1328px) {
+  .thead { display: none; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .row > *, .person > div { min-width: 0; }
+  .row .summary, .row .next, .row .met { grid-column: 1 / -1; }
+  .row .proj-cell { grid-column: 1; }
+  .row .stage-cell { grid-column: 2; grid-row: 1; }
+}
 @media (max-width: 1180px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats .projects { grid-column: 1 / -1; }
@@ -201,12 +199,6 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
   .head > div:last-child > * { min-height: 44px; }
   .stats > *, .stat { min-width: 0; }
   .stat .lbl, .bar > span:first-child { overflow-wrap: anywhere; }
-  .thead { display: none; }
-  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
-  .row > *, .person > div { min-width: 0; }
-  .row .summary, .row .next, .row .met { grid-column: 1 / -1; }
-  .row .proj-cell { grid-column: 1; }
-  .row .stage-cell { grid-column: 2; grid-row: 1; }
   select.f { max-width: 100%; min-width: 0; flex: 1 1 140px; }
   .toolbar { position: static; }
   .toolbar input, .toolbar select, .toolbar button { min-height: 44px; }
@@ -223,38 +215,28 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
     position: fixed; z-index: 10; inset: auto 0 0; display: flex;
     padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--line);
-    background: color-mix(in srgb, var(--panel) 80%, transparent);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: var(--panel);
   }
   .mobile-nav a {
     flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px; padding: 4px 0;
     color: var(--muted); text-decoration: none; font-size: 11px; line-height: 1.2;
-    transition: transform 140ms var(--ease-out);
+    transition: color .15s, background-color .15s;
   }
-  .mobile-nav a:active { transform: scale(.92); }
   .mobile-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
   .mobile-nav svg { width: 24px; height: 24px; }
-  .mobile-nav a svg { filter: grayscale(1) opacity(.45); transition: filter .15s; }
-  .mobile-nav a[aria-current="page"] svg { filter: drop-shadow(0 2px 3px rgba(228, 96, 42, .25)); }
+  .mobile-nav svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 }
 @media (max-width: 360px) {
   .main { padding-right: 12px; padding-left: 12px; }
   .two, .half { grid-template-columns: 1fr; }
   .mobile-nav a { font-size: 10.5px; }
 }
-/* ---------- press feedback ---------- */
-.btn, .nav, .chipbtn, .seg button, .dhead .x { transition: transform 140ms var(--ease-out); }
-.btn:active:not(:disabled), .nav:active, .chipbtn:active, .seg button:active { transform: scale(.97); }
-.dhead .x:active { transform: scale(.94); }
-button.stat:active { transform: scale(.97) rotate(-1.6deg); }
-button.stat:nth-child(even):active { transform: scale(.97) rotate(1.6deg); }
-
-/* ---------- hover wiggle on clickables (hover-capable devices only) ---------- */
-@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1.2deg); } 55% { transform: rotate(1.2deg); } 80% { transform: rotate(-.5deg); } }
+/* ---------- restrained interaction feedback ---------- */
+.btn, .nav, .chipbtn, .seg button, .dhead .x, .mobile-nav a { transition: background-color .15s, color .15s, border-color .15s; }
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover:not(:disabled), .nav:hover, .chipbtn:hover, .seg button:hover, button.stat:hover,
-  .copy:hover, .clear:hover, .dhead .x:hover, .mobile-nav a:hover { animation: wiggle .4s var(--ease-out); }
+  .btn:hover:not(:disabled), .chipbtn:hover, .seg button:hover, .dhead .x:hover, .mobile-nav a:hover { background-color: #eee7de; }
+  .btn-primary:hover:not(:disabled) { background-color: #c94f21; }
 }
 
 /* ---------- toasts (Sonner-style: transitions, not keyframes) ---------- */
@@ -284,18 +266,19 @@ button.stat:nth-child(even):active { transform: scale(.97) rotate(1.6deg); }
 </style>
 </head>
 <body>
+<div id="loadState" class="load-state" role="status" aria-live="polite"><span class="loader" aria-hidden="true"></span>Loading your contacts…</div>
 <div class="app" style="visibility:hidden">
   <aside class="side">
     <div class="brand"><span class="logo"></span>Syncy</div>
-    <a class="nav on" href="#">👥 Contacts <span class="count" id="navCount"></span></a>
-    <a class="nav" href="index.html">📱 Phone app</a>
+    <a class="nav on" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg> Contacts <span class="count" id="navCount"></span></a>
+    <a class="nav" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M9 18h6"/></svg> Phone app</a>
     <div class="spacer"></div>
   </aside>
 
   <main class="main">
     <div class="head">
       <div>
-        <h1 id="pageTitle">Welcome back 👋</h1>
+        <h1 id="pageTitle">Contacts</h1>
         <p id="subline"></p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="index.html">＋ Scan a new contact</a><button class="btn" onclick="signOut()">Sign out</button></div>
@@ -344,15 +327,15 @@ button.stat:nth-child(even):active { transform: scale(.97) rotate(1.6deg); }
     </div>
   </main>
   <nav class="mobile-nav" aria-label="Main navigation">
-    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#f08c18"/></linearGradient></defs><g fill="none" stroke="#f3a33f" stroke-width="2" stroke-linecap="round"><path d="M12 2.2v2M12 19.8v2M2.2 12h2M19.8 12h2M4.8 4.8l1.4 1.4M17.8 17.8l1.4 1.4M4.8 19.2l1.4-1.4M17.8 6.2l1.4-1.4"/></g><circle cx="12" cy="12" r="5.2" fill="url(#gi-sun)"/><ellipse cx="10.3" cy="9.9" rx="2.6" ry="1.7" fill="#fff" opacity=".55"/></svg>Today</a>
-    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient></defs><g fill="url(#gi-p2)"><circle cx="16.6" cy="8.1" r="2.9"/><path d="M11.6 20c.6-3.4 2.6-5.2 5-5.2s4.4 1.8 5 5.2z"/></g><g fill="url(#gi-p1)"><circle cx="8.4" cy="7.4" r="3.6"/><path d="M2.2 20c.7-4 3.2-6.1 6.2-6.1s5.5 2.1 6.2 6.1z"/></g><ellipse cx="7.3" cy="5.9" rx="1.7" ry="1.1" fill="#fff" opacity=".55"/><ellipse cx="15.8" cy="6.9" rx="1.3" ry=".9" fill="#fff" opacity=".5"/></svg>Contacts</a>
-    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><path d="M3 6.5c0-1.1.9-2 2-2h4.2l2 2.3H19c1.1 0 2 .9 2 2V17c0 1.7-1.3 3-3 3H6c-1.7 0-3-1.3-3-3z" fill="url(#gi-fo)"/><path d="M3 8.8h18v1.6H3z" fill="#fff" opacity=".25"/><ellipse cx="8" cy="7.2" rx="3.2" ry="1.1" fill="#fff" opacity=".4"/></svg>Projects</a>
-    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb470"/><stop offset="1" stop-color="#e4602a"/></linearGradient><linearGradient id="gi-d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient><linearGradient id="gi-d4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><rect x="3" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d1)"/><rect x="12.6" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d2)"/><rect x="3" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d3)"/><rect x="12.6" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d4)"/><ellipse cx="7.2" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/><ellipse cx="16.8" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/></svg>Dashboard</a>
+    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>Today</a>
+    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>Contacts</a>
+    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>Projects</a>
+    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
   </nav>
 </div>
 
 <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
-<aside class="drawer" id="drawer" aria-label="Contact details"></aside>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Contact details" aria-hidden="true"></aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="config.js"></script>
@@ -506,7 +489,7 @@ function renderRows() {
   document.getElementById('rows').innerHTML = list.length ? list.map(c => {
     const p = proj(c.project_id), s = stage(c.stage), e = event(c.event_id);
     const who = [c.role, c.company].filter(Boolean).join(' · ') || c.profile_url;
-    return `<div class="row ${state.openId === c.id ? 'open' : ''}" role="row" tabindex="0" onclick="openDrawer('${c.id}')" onkeydown="if(event.key==='Enter')openDrawer('${c.id}')">
+    return `<div class="row ${state.openId === c.id ? 'open' : ''}" data-contact-id="${esc(c.id)}" role="row" tabindex="0" aria-label="Open contact details for ${esc(c.name || c.profile_slug)}" onclick="openDrawer('${c.id}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openDrawer('${c.id}')}">
       <div class="person">${avatar(c.name)}<div style="min-width:0"><div class="pname">${esc(c.name || c.profile_slug)} ${srcBadge(c.source, c.profile_url)}</div><div class="prole">${esc(who)}</div></div></div>
       <div class="summary">${needsNote(c) ? '<span class="pill need-note">✍️ Scanned, needs a note</span>' : esc(c.summary)}</div>
       <div class="proj-cell">${p ? `<span class="pill" title="${esc(p.name)}">${projTag(p)} ${esc(p.name.split(':')[0])}</span>` : '<span class="pill">No project</span>'}</div>
@@ -522,6 +505,7 @@ function renderDrawer() {
   const c = state.openId && db.get('contacts', state.openId);
   document.getElementById('scrim').classList.toggle('show', !!c);
   dr.classList.toggle('show', !!c);
+  dr.setAttribute('aria-hidden', String(!c));
   if (!c) return;
   const d = { ...c, ...state.draft };
   const e = event(c.event_id);
@@ -626,10 +610,7 @@ function confirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel =
       setTimeout(() => wrap.remove(), 300);
       resolve(result);
     };
-    const onKey = e => {
-      if (e.key === 'Escape') { e.stopPropagation(); done(false); }
-      else if (e.key === 'Enter') { e.stopPropagation(); done(true); }
-    };
+    const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } };
     document.addEventListener('keydown', onKey, true);
     wrap.querySelector('.dscrim').addEventListener('click', () => done(false));
     wrap.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => done(b.dataset.act === 'yes')));
@@ -679,10 +660,13 @@ async function openDrawer(id) {
   if (id !== state.openId && dirty() && !(await discardPrompt())) return;
   if (id !== state.openId) state.draft = {};
   state.openId = id; renderRows(); renderDrawer();
+  document.querySelector('#drawer .dhead .x')?.focus();
 }
 async function closeDrawer() {
   if (dirty() && !(await discardPrompt())) return;
+  const previousId = state.openId;
   state.draft = {}; state.openId = null; renderRows(); renderDrawer();
+  document.querySelector(`.row[data-contact-id="${previousId}"]`)?.focus();
 }
 
 async function deleteContact(id, button) {
@@ -743,13 +727,6 @@ function copyDraft(btn) {
 }
 async function signOut() { try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
 
-// A Claude-style greeting instead of a static page title.
-(function setGreeting() {
-  const h = new Date().getHours();
-  const timed = h < 5 ? 'Up late? 🌙' : h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 👋' : 'Good evening 🌆';
-  const playful = ['How is it going?', 'Welcome back 👋', 'Nice to see you again', 'Ready to follow up?', 'Who did you meet today?'];
-  document.getElementById('pageTitle').textContent = Math.random() < 0.5 ? timed : playful[Math.floor(Math.random() * playful.length)];
-})();
 document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; state.statFilter = null; renderRows(); document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden'; });
 [['fProject', 'project'], ['fEvent', 'event'], ['fDue', 'due'], ['fStatus', 'status'], ['fSource', 'source'], ['sortSel', 'sort']].forEach(([id, key]) =>
   document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; if (key !== 'sort') state.statFilter = null; renderAll(); }));
@@ -760,18 +737,14 @@ window.addEventListener('db-error', e => toast(`Could not sync with Supabase: ${
 window.addEventListener('auth-change', () => location.replace('login.html?next=dashboard.html'));
 db.init().then(authenticated => {
   if (!authenticated) { location.replace('login.html?next=dashboard.html'); return; }
+  document.getElementById('loadState').remove();
   document.querySelector('.app').style.visibility = 'visible';
   renderAll();
-}).catch(error => {
-  // A local checkout has no config.js (generated only in the Vercel build): show the demo data instead.
-  if (!window.SYNCY_CONFIG?.supabaseUrl || !window.SYNCY_CONFIG?.supabaseAnonKey) {
-    const app = document.querySelector('.app');
-    app.style.visibility = 'visible';
-    app.insertAdjacentHTML('afterbegin', '<div style="background:#2b2320;color:#fff;font-size:12px;padding:6px 14px;text-align:center">Demo mode · local sample data, nothing saved to an account</div>');
-    renderAll();
-    return;
-  }
-  document.querySelector('.app').innerHTML = '<main class="main"><h1>Could not connect to Supabase</h1><p>Check your configuration and connection, then reload.</p><button class="btn" onclick="location.reload()">Retry</button></main>';
+}).catch(() => {
+  document.getElementById('loadState').remove();
+  const app = document.querySelector('.app');
+  app.innerHTML = '<main class="main"><h1>Could not connect to Supabase</h1><p>Check your configuration and connection, then reload.</p><button class="btn" onclick="location.reload()">Retry</button></main>';
+  app.style.visibility = 'visible';
 });
 </script>
 </body>
