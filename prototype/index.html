@@ -1508,7 +1508,6 @@ async function runLiveProcess() {
 }
 
 // ---------- AI stand-in ----------
-// Real build: LLM call 1 (summarise) + call 2 (compare with projects, draft) per PRD §9.
 // Here: the scripted result for a demo persona's untouched note, otherwise a simple keyword heuristic.
 const STOP = new Set('a an and are as at be but by for from has have he her him his i if in is it its me my of on or our she so that the their them they this to was we were will with you your about also just very really who what when where which would could should there then than been into over more some any can did does not out up our ours us met talked said told'.split(' '));
 const stem = w => w.replace(/(ings?|ers?|es|s)$/, '');

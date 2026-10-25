@@ -1,6 +1,6 @@
--- Syncy — Phase 1 schema (Supabase / Postgres)
--- Supabase is the source of truth. Notion / notes-app sync is Phase 2 (see docs/DATA_MODEL.md §5);
--- the external_* columns are reserved for it and stay empty in Phase 1.
+-- Syncy schema (Supabase / Postgres)
+-- Supabase is the source of truth. Notion project details are imported one way.
+-- The external_* columns track imported projects and are null for locally created projects.
 -- The frontend mirror of these rows lives in prototype/data.js (same table and column names).
 
 create extension if not exists pgcrypto;
