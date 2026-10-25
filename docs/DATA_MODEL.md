@@ -63,7 +63,7 @@ Dashboard: filter, sort, edit everything later (stage, project, next step, notes
 | Keys | id, user_id, event_id → events, project_id → projects |
 | Scan | source (`qr_linkedin` · `qr_xing` · `qr_other` · `manual`), profile_url, profile_slug, name, role, company, scanned_at |
 | Note | note_kind (`text` · `voice`), note_text, `audio_path` (legacy rows only) |
-| AI output | summary, discussed text[≤3], needs, match_reason, match_confidence (`high` · `medium` · `low`), project_set_by (`ai` · `user`), next_step, next_step_date, follow_up_draft |
+| AI output | summary, summary_edited_by_user, discussed text[≤3], needs, match_reason, match_confidence (`high` · `medium` · `low`), project_set_by (`ai` · `user`), next_step, next_step_date, follow_up_draft |
 | Management | status (`captured` · `processing` · `review` · `saved` · `error`), stage (`to_follow_up` · `followed_up` · `meeting_set` · `won` · `not_relevant`), user_notes |
 | Phase 2 | external_id, external_synced_at |
 | Time | created_at, updated_at (trigger) |
@@ -83,7 +83,7 @@ Rules in the schema: one row per person per event (`unique (user_id, event_id, p
 | Dashboard column / control | Column(s) |
 |---|---|
 | Person | name, role, company, source, profile_url |
-| Summary | summary (drawer: + discussed, needs, note_text) |
+| Summary | summary, summary_edited_by_user (drawer: + discussed, needs, note_text) |
 | Project (filter, editable) | project_id → projects.name, match_reason, project_set_by |
 | Next step (sort, editable) | next_step, next_step_date |
 | Stage (filter, editable) | stage |

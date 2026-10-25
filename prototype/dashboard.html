@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f3efe8">
+<meta name="theme-color" content="#f4f6f8">
 <title>Syncy contacts</title>
 <!--
   Contacts dashboard. Reads and writes the same rows as the phone app through data.js,
@@ -11,30 +11,30 @@
 -->
 <style>
 :root {
-  --bg: #f3efe8;
-  --panel: #fffcf7;
-  --ink: #30281f;
-  --muted: #71685c;
-  --line: #e5dccf;
-  --card: #fffdf9;
-  --accent: #b95835;
-  --accent-hover: #98472e;
-  --accent-ink: #8f472d;
-  --accent-2: #c39858;
-  --accent-soft: #f5e9de;
-  --ok: #5f6f49;
-  --ok-soft: #e9efe1;
-  --olive: #5f6f49;
-  --olive-soft: #edf0e8;
-  --bark: #786148;
-  --bark-soft: #f1e9df;
-  --grey-soft: #eee8de;
-  --danger: #a54739;
+  --bg: #f4f6f8;
+  --panel: #fff;
+  --ink: #171a21;
+  --muted: #667085;
+  --line: #e3e7ee;
+  --card: #fff;
+  --accent: #e4602a;
+  --accent-hover: #c94f1e;
+  --accent-ink: #a8431a;
+  --accent-2: #f3a33f;
+  --accent-soft: #fdede3;
+  --ok: #2c8a57;
+  --ok-soft: #e4f3ea;
+  --blue: #2f6db5;
+  --blue-soft: #e6eef8;
+  --purple: #7a4bc0;
+  --purple-soft: #efe8f9;
+  --grey-soft: #eef1f5;
+  --danger: #c2372b;
   --ease-out: cubic-bezier(.23, 1, .32, 1);
   --ease-drawer: cubic-bezier(.32, .72, 0, 1);
   --linkedin: #0a66c2;
   --xing: #026466;
-  --shadow: 0 1px 2px rgba(48, 40, 31, .04), 0 5px 16px rgba(48, 40, 31, .045);
+  --shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 8px 22px rgba(23, 26, 33, .07);
   --radius: 14px;
 }
 * { box-sizing: border-box; }
@@ -50,14 +50,14 @@ a { touch-action: manipulation; }
 .app { display: grid; grid-template-columns: 232px 1fr; min-height: 100dvh; }
 
 /* ---------- sidebar ---------- */
-.side { background: #302a22; color: #efe8dc; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100dvh; }
+.side { background: #171a21; color: #e4e7ec; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100dvh; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; margin: 0 8px 22px; color: #fff; }
-.logo { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-2); }
-.nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: #cbbfb1; text-decoration: none; text-align: left; }
+.logo { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd27a, var(--accent-2) 45%, var(--accent) 100%); box-shadow: 0 0 14px rgba(243, 163, 63, .35); }
+.nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: #b9c1cc; text-decoration: none; text-align: left; }
 .nav svg { width: 18px; height: 18px; flex: none; }
 @media (hover: hover) and (pointer: fine) { .nav:hover { background: rgba(255, 255, 255, .06); color: #fff; } }
 .nav.on { background: rgba(255, 255, 255, .1); color: #fff; font-weight: 600; }
-.nav .count { margin-left: auto; font-size: 12px; color: #a99c8d; }
+.nav .count { margin-left: auto; font-size: 12px; color: #98a2b3; }
 .side .spacer { flex: 1; }
 
 /* ---------- main ---------- */
@@ -66,11 +66,17 @@ a { touch-action: manipulation; }
 .head h1 { margin: 0; font-size: clamp(28px, 2.5vw, 34px); letter-spacing: -.035em; line-height: 1.15; }
 .head p { margin: 4px 0 0; color: var(--muted); }
 .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 14px; border-radius: 10px; font-weight: 600; background: var(--grey-soft); text-decoration: none; color: var(--ink); }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .22); }
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::before { content: ''; position: absolute; left: 2px; right: 2px; top: 2px; height: 48%; pointer-events: none; border-radius: inherit; border-bottom-left-radius: 50% 35%; border-bottom-right-radius: 50% 35%; background: linear-gradient(180deg, rgba(255, 255, 255, .36), rgba(255, 255, 255, .05)); }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--grey-soft); flex: none; }
+.set-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.set-row span { color: var(--muted); flex: none; }
+.set-row b { font-weight: 600; text-align: right; }
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 12px; margin: 20px 0 18px; }
-.stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-align: left; box-shadow: none; transition: background-color .15s, border-color .15s; }
-@media (hover: hover) and (pointer: fine) { button.stat:hover { background: #f8f3eb; border-color: var(--accent-2); } }
+.stat { background: linear-gradient(180deg, #fff 0%, #f7f9fc 100%); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-align: left; box-shadow: var(--shadow); transition: transform .18s var(--ease-out), background-color .18s, border-color .18s, box-shadow .18s; }
+@media (hover: hover) and (pointer: fine) { button.stat:hover { transform: translateY(-2px); background: var(--card); border-color: var(--accent-2); box-shadow: 0 8px 22px rgba(40, 28, 16, .1); } }
 .stat.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
 .stat .num { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.035em; line-height: 1.1; }
 .stat .lbl { color: var(--muted); font-size: 13px; }
@@ -81,41 +87,61 @@ a { touch-action: manipulation; }
 .bar .fill { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
 
 /* ---------- toolbar ---------- */
-.toolbar { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 12px; z-index: 5; box-shadow: none; }
+.toolbar { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 12px; z-index: 5; box-shadow: var(--shadow); }
 .search { flex: 1 1 240px; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; }
 .search svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .search input { border: 0; outline: 0; padding: 9px 0; width: 100%; background: transparent; }
 .search:focus-within { outline: 2px solid var(--accent-ink); border-color: transparent; }
-select.f { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--card); max-width: 210px; }
+select.f { border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font-size: 13px; background: var(--card); max-width: 180px; }
 select.f:focus { outline: 2px solid var(--accent-ink); border-color: transparent; }
 select.f.set { border-color: var(--accent); background: var(--accent-soft); }
+
+/* capture status as a progress line, sources as an icon line */
+.stepper, .srcline { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; flex: none; }
+.stepper .step, .srcline button { display: inline-flex; align-items: center; gap: 5px; padding: 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); transition: transform 160ms var(--ease-out); }
+.stepper .step:active, .srcline button:active { transform: scale(.94); }
+.stepper .sdot { width: 8px; height: 8px; border-radius: 50%; background: #d7dde5; flex: none; transition: background .15s, box-shadow .15s; }
+.stepper .step.done .sdot, .stepper .step.on .sdot { background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+.stepper .step.on { color: var(--accent-ink); }
+.stepper .step.on .sdot { box-shadow: 0 0 0 3px var(--accent-soft); }
+.conn { width: 14px; height: 2px; border-radius: 1px; background: var(--line); margin: 0 5px; flex: none; }
+.conn.done { background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+.srcline .src { width: 20px; height: 20px; border-radius: 6px; font-size: 11px; filter: grayscale(1) opacity(.5); transition: filter .15s, box-shadow .15s; }
+.srcline button[aria-pressed="true"] .src { filter: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.more-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.more-toggle .chev { display: inline-block; transition: transform .2s var(--ease-out); }
+.more-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.more-toggle.set { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.morefilters { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; align-items: center; }
+.morefilters[hidden] { display: none; }
 .stages { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; align-items: center; }
 .stages .lbl { font-size: 12.5px; color: var(--muted); margin-right: 2px; }
-.chipbtn { min-height: 36px; font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
-.chipbtn.on { border-color: transparent; }
+.chipbtn { min-height: 36px; font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); transition: transform .16s var(--ease-out), background-color .16s, border-color .16s, color .16s, box-shadow .16s; }
+.chipbtn.on { border-color: transparent; box-shadow: 0 2px 6px rgba(228, 96, 42, .12); }
 .clear { font-size: 13px; color: var(--accent-ink); font-weight: 600; margin-left: auto; }
 .resultline { display: flex; justify-content: space-between; align-items: center; margin: 14px 2px 8px; color: var(--muted); font-size: 13px; }
 
 /* ---------- table ---------- */
-.table { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: none; }
+.table { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
 .thead, .row { display: grid; grid-template-columns: minmax(200px, 2.1fr) minmax(220px, 3fr) minmax(120px, 1.2fr) minmax(170px, 1.7fr) minmax(110px, 1fr) minmax(110px, 1fr); gap: 14px; align-items: center; padding: 12px 16px; }
-.thead { background: #f4efe6; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.thead { background: #f6f8fa; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .thead button { text-transform: inherit; letter-spacing: inherit; font-weight: inherit; color: inherit; text-align: left; display: inline-flex; gap: 4px; align-items: center; }
 .thead button.on { color: var(--ink); }
-.row { border-bottom: 1px solid var(--line); cursor: pointer; transition: background-color .15s; }
+.row { border-bottom: 1px solid var(--line); cursor: pointer; transition: transform .18s var(--ease-out), background-color .18s, border-color .18s, box-shadow .18s; }
 .row:last-child { border-bottom: 0; }
-@media (hover: hover) and (pointer: fine) { .row:hover { background: #f8f4ed; } }
+@media (hover: hover) and (pointer: fine) { .row:hover { background: #f8fafc; } }
 .row:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
 .row.open { background: var(--accent-soft); }
 .person { display: flex; gap: 10px; align-items: center; min-width: 0; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; position: relative; overflow: hidden; }
+.avatar::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(130% 80% at 30% 15%, rgba(255, 255, 255, .5), rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, 0) 62%), linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(0, 0, 0, .08)); }
 .pname { font-weight: 650; display: flex; align-items: center; gap: 6px; }
 .prole { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.summary { font-size: 13.5px; color: #463d33; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.summary { font-size: 13.5px; color: #3d4652; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .src { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; color: #fff; font-size: 10px; font-weight: 800; flex: none; }
 .src.li { background: var(--linkedin); }
 .src.xi { background: var(--xing); }
-.src.ot { background: #6f675f; }
+.src.ot { background: #667085; }
 .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--grey-soft); color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pill.need-note { background: var(--accent-soft); color: var(--accent-ink); }
 .proj-cell .pill { white-space: normal; line-height: 1.3; }
@@ -130,8 +156,8 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
 
 .st-to_follow_up { background: var(--accent-soft); color: var(--accent-ink); }
-.st-followed_up { background: var(--olive-soft); color: var(--olive); }
-.st-meeting_set { background: var(--bark-soft); color: var(--bark); }
+.st-followed_up { background: var(--blue-soft); color: var(--blue); }
+.st-meeting_set { background: var(--purple-soft); color: var(--purple); }
 .st-won { background: var(--ok-soft); color: var(--ok); }
 .st-not_relevant { background: var(--grey-soft); color: var(--muted); }
 
@@ -144,7 +170,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .drawer:not(.show) { transition-duration: .28s; }
 .dhead { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: flex-start; }
 .dhead .avatar { width: 52px; height: 52px; font-size: 18px; }
-.dhead .x { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--grey-soft); flex: none; font-size: 16px; }
+.dhead .x { margin-left: auto; width: 44px; height: 44px; border-radius: 50%; background: var(--grey-soft); flex: none; font-size: 16px; }
 .dhead input.title { font-size: 20px; font-weight: 700; letter-spacing: -.01em; border: 1px solid transparent; border-radius: 8px; padding: 2px 6px; margin-left: -6px; width: 100%; background: transparent; }
 .dhead input.title:focus { border-color: var(--accent-ink); background: #fff; }
 @media (hover: hover) and (pointer: fine) { .dhead input.title:hover:not(:focus) { border-color: var(--line); background: #fff; } }
@@ -154,7 +180,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .label .ai.user { color: var(--muted); }
 .label .label-actions { display: inline-flex; align-items: center; gap: 10px; }
 .box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.match { border: 1px solid var(--line); border-left: 3px solid var(--accent-2); background: #f8f2e8; border-radius: 12px; padding: 12px 14px; }
+.match { border: 1px solid var(--line); border-left: 3px solid var(--accent-2); background: linear-gradient(180deg, #fff7f1, #fff); border-radius: 12px; padding: 12px 14px; }
 .match .reason { margin-top: 8px; font-size: 13.5px; }
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .seg button { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); }
@@ -164,7 +190,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .edit:focus { outline: 2px solid var(--accent-ink); border-color: transparent; }
 .two { display: grid; grid-template-columns: 1fr 150px; gap: 8px; }
 .half { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.linkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; background: #f2ece2; border-radius: 10px; padding: 8px 10px; }
+.linkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--grey-soft); border-radius: 10px; padding: 8px 10px; }
 .linkrow code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .copy { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
 .savebar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; margin-top: 18px; padding: 12px 0 4px; background: var(--panel); border-top: 1px solid var(--line); }
@@ -184,11 +210,17 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 /* ---------- responsive ---------- */
 @media (max-width: 1328px) {
   .thead { display: none; }
-  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .table { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  #rows { display: grid; gap: 10px; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+  #rows > .row:last-child { border-bottom: 1px solid var(--line); }
   .row > *, .person > div { min-width: 0; }
   .row .summary, .row .next, .row .met { grid-column: 1 / -1; }
   .row .proj-cell { grid-column: 1; }
   .row .stage-cell { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 1328px) and (hover: hover) and (pointer: fine) {
+  .row:hover { transform: translateY(-1px); background: var(--card); border-color: var(--accent-2); box-shadow: 0 8px 22px rgba(40, 28, 16, .1); }
 }
 @media (max-width: 1180px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -199,13 +231,14 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
   .side { display: none; }
   .main { padding: 18px 16px calc(88px + env(safe-area-inset-bottom, 0px)); }
   .head, .head > div { min-width: 0; }
-  .head > div:last-child { width: 100%; }
-  .head > div:last-child > * { min-height: 44px; }
   .stats > *, .stat { min-width: 0; }
   .stat .lbl, .bar > span:first-child { overflow-wrap: anywhere; }
   select.f { max-width: 100%; min-width: 0; flex: 1 1 140px; }
   .toolbar { position: static; }
-  .toolbar input, .toolbar select, .toolbar button { min-height: 44px; }
+  .toolbar input, .toolbar button { min-height: 44px; }
+  .toolbar select { min-height: 40px; }
+  .stepper, .srcline { height: 44px; flex: 1 1 auto; justify-content: center; }
+  .stepper .step, .srcline button { min-height: 0; }
   .toolbar input, .toolbar select, .drawer input, .drawer select, .drawer textarea { font-size: 16px; }
   .chipbtn { min-height: 44px; padding: 8px 12px; }
   .clear { min-height: 44px; padding: 8px; }
@@ -215,40 +248,47 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
   .edit { min-width: 0; }
   .dhead .x { width: 44px; height: 44px; }
   .seg button, .copy { min-height: 44px; padding: 10px 12px; }
+  /* Same bar as the app's tabbar in index.html: frosted, 24px icons, active label hides under its icon. */
   .mobile-nav {
     position: fixed; z-index: 10; inset: auto 0 0; display: flex;
-    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 8px max(22px, calc(8px + env(safe-area-inset-bottom)));
     border-top: 1px solid var(--line);
     background: var(--panel);
   }
   .mobile-nav a {
-    flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 2px; padding: 4px 0;
+    flex: 1; min-width: 0; display: flex; flex-direction: column;
+    align-items: center; gap: 2px; padding: 4px 0;
     color: var(--muted); text-decoration: none; font-size: 11px; line-height: 1.2;
-    transition: color .15s, background-color .15s;
+    transition: transform 160ms var(--ease-out), color .15s, background-color .15s;
   }
   .mobile-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
   .mobile-nav svg { width: 24px; height: 24px; }
   .mobile-nav svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .mobile-nav .tlbl { transition: opacity .25s var(--ease-out), transform .25s var(--ease-out); }
+  .mobile-nav a[aria-current="page"] .tlbl { opacity: 0; transform: translateY(8px); }
 }
 @media (max-width: 360px) {
   .main { padding-right: 12px; padding-left: 12px; }
   .two, .half { grid-template-columns: 1fr; }
-  .mobile-nav a { font-size: 10.5px; }
 }
 /* ---------- restrained interaction feedback ---------- */
-.btn, .nav, .chipbtn, .seg button, .dhead .x, .mobile-nav a { transition: background-color .15s, color .15s, border-color .15s; }
+.btn, .nav, .chipbtn, .seg button, .dhead .x, .mobile-nav a, .icon-btn, .more-toggle { transition: background-color .16s, color .16s, border-color .16s, transform .16s var(--ease-out), box-shadow .16s; }
+.btn:active:not(:disabled), .nav:active, .chipbtn:active, .seg button:active, .dhead .x:active, .mobile-nav a:active, .icon-btn:active, .more-toggle:active { transform: scale(.98); }
+button.stat:active { transform: scale(.97) rotate(-1deg); }
+button.stat:nth-child(even):active { transform: scale(.97) rotate(1deg); }
+@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1deg); } 55% { transform: rotate(1deg); } 80% { transform: rotate(-.4deg); } }
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover:not(:disabled), .chipbtn:hover, .seg button:hover, .dhead .x:hover, .mobile-nav a:hover { background-color: #eee7de; }
+  .btn:hover:not(:disabled), .chipbtn:not(.on):hover, .seg button:hover:not([aria-pressed="true"]), .dhead .x:hover, .mobile-nav a:hover, .icon-btn:hover, .more-toggle:hover, .stepper .step:hover, .srcline button:hover { background-color: var(--grey-soft); }
   .btn-primary:hover:not(:disabled) { background-color: var(--accent-hover); }
+  .btn:hover:not(:disabled), .nav:hover, .chipbtn:hover, .seg button:hover, .copy:hover, .clear:hover, .dhead .x:hover, .mobile-nav a:hover, .icon-btn:hover, .more-toggle:hover, .stepper .step:hover, .srcline button:hover { animation: wiggle .38s var(--ease-out); }
 }
 
 /* ---------- toasts (Sonner-style: transitions, not keyframes) ---------- */
 .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 80; pointer-events: none; }
 @media (max-width: 900px) { .toasts { left: 14px; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); align-items: center; } }
-.toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; background: #241f1a; color: #fff; font-size: 13.5px; font-weight: 500; line-height: 1.4; padding: 11px 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .22); transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; background: #171a21; color: #fff; font-size: 13.5px; font-weight: 500; line-height: 1.4; padding: 11px 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .22); transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
 .toast::before { font-weight: 800; flex: none; }
-.toast.success::before { content: '✓'; color: #c7d1ad; }
+.toast.success::before { content: '✓'; color: #8ce0a5; }
 .toast.error::before { content: '!'; color: #e6ad9d; }
 .toast[data-state="pre"] { opacity: 0; transform: translateY(12px) scale(.97); }
 .toast[data-state="out"] { opacity: 0; transform: translateY(6px) scale(.98); transition-duration: .2s; }
@@ -286,7 +326,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
         <h1 id="pageTitle">Contacts</h1>
         <p id="subline"></p>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="index.html">＋ Scan a new contact</a><button class="btn" onclick="signOut()">Sign out</button></div>
+      <button class="icon-btn" type="button" aria-label="Settings" title="Settings" onclick="openSettings()" style="align-self:flex-start"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01c.26.63.87 1.04 1.56 1.04H21a2 2 0 1 1 0 4h-.09c-.69 0-1.3.41-1.51 1.03Z"/></svg></button>
     </div>
 
     <section class="stats" id="stats" aria-label="Summary"></section>
@@ -302,26 +342,19 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
         <option value="later">Due later</option>
         <option value="none">No date</option>
       </select>
-      <select class="f" id="fStatus" aria-label="Filter by capture status">
-        <option value="all">Any capture status</option>
-        <option value="saved">Saved</option>
-        <option value="captured">Needs a note</option>
-        <option value="review">Waiting for review</option>
-      </select>
-      <select class="f" id="fSource" aria-label="Filter by source">
-        <option value="all">All sources</option>
-        <option value="qr_linkedin">LinkedIn</option>
-        <option value="qr_xing">Xing</option>
-        <option value="qr_other">Other link</option>
-      </select>
-      <select class="f" id="sortSel" aria-label="Sort">
-        <option value="due">Sort: next follow-up</option>
-        <option value="met">Sort: recently met</option>
-        <option value="name">Sort: name A–Z</option>
-        <option value="project">Sort: project</option>
-        <option value="stage">Sort: stage</option>
-      </select>
-      <div class="stages" id="stageChips"></div>
+      <button type="button" class="more-toggle" id="moreBtn" aria-expanded="false" aria-controls="moreFilters" onclick="toggleMore()">More <span class="chev" aria-hidden="true">▾</span></button>
+      <div class="morefilters" id="moreFilters" hidden>
+        <div class="stepper" id="fStatus" role="group" aria-label="Filter by capture status"></div>
+        <div class="srcline" id="fSource" role="group" aria-label="Filter by source"></div>
+        <select class="f" id="sortSel" aria-label="Sort">
+          <option value="due">Sort: next follow-up</option>
+          <option value="met">Sort: recently met</option>
+          <option value="name">Sort: name A–Z</option>
+          <option value="project">Sort: project</option>
+          <option value="stage">Sort: stage</option>
+        </select>
+        <div class="stages" id="stageChips"></div>
+      </div>
     </div>
 
     <div class="resultline"><span id="resultCount"></span><button class="clear" id="clearBtn" onclick="clearFilters()">Clear filters</button></div>
@@ -332,10 +365,10 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
     </div>
   </main>
   <nav class="mobile-nav" aria-label="Main navigation">
-    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>Today</a>
-    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>Contacts</a>
-    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>Projects</a>
-    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
+    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg><span class="tlbl">Today</span></a>
+    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg><span class="tlbl">Contacts</span></a>
+    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg><span class="tlbl">Projects</span></a>
+    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span class="tlbl">Dashboard</span></a>
   </nav>
 </div>
 
@@ -354,10 +387,12 @@ const STAGES = [
   { id: 'not_relevant', label: 'Not relevant' },
 ];
 const SOURCE_LABEL = { qr_linkedin: 'LinkedIn', qr_xing: 'Xing', qr_other: 'Profile link', manual: 'Manual' };
-const COLORS = ['#9f4d32', '#566545', '#765c42', '#8b6939', '#67574a', '#59645a'];
+const CAPTURE_STEPS = [['captured', 'Needs a note'], ['review', 'In review'], ['saved', 'Saved']];
+const SRC_OPTS = [['qr_linkedin', 'li', 'in', 'LinkedIn'], ['qr_xing', 'xi', 'X', 'Xing'], ['qr_other', 'ot', '↗', 'Other link']];
+const COLORS = ['#e4602a', '#2c8a57', '#0a66c2', '#7a4bc0', '#c2410c', '#0f766e', '#a8431a', '#2f6db5'];
 
 const state = {
-  q: '', project: 'all', event: 'all', due: 'all', status: 'all', source: 'all',
+  q: '', project: 'all', event: 'all', due: 'all', status: 'all', source: 'all', more: false,
   stages: new Set(STAGES.map(s => s.id)),
   sort: 'due', openId: null, statFilter: null,
   draft: {}, // unsaved edits for the open contact; written to the db only on Save
@@ -468,13 +503,25 @@ function renderFilters() {
   if (![...fe.options].some(o => o.value === state.event)) state.event = 'all';
   fp.value = state.project; fe.value = state.event;
   document.getElementById('fDue').value = state.due;
-  document.getElementById('fStatus').value = state.status;
-  document.getElementById('fSource').value = state.source;
   document.getElementById('sortSel').value = state.sort;
-  ['fProject', 'fEvent', 'fDue', 'fStatus', 'fSource'].forEach(id => {
+  ['fProject', 'fEvent', 'fDue'].forEach(id => {
     const el = document.getElementById(id);
     el.classList.toggle('set', el.value !== 'all');
   });
+  // Capture status drawn as a progress line: dots fill up to the selected step.
+  const stepIdx = CAPTURE_STEPS.findIndex(([id]) => id === state.status);
+  document.getElementById('fStatus').innerHTML = CAPTURE_STEPS.map(([id, label], i) =>
+    `${i ? `<span class="conn ${stepIdx >= 0 && i <= stepIdx ? 'done' : ''}" aria-hidden="true"></span>` : ''}` +
+    `<button type="button" class="step ${i === stepIdx ? 'on' : ''} ${stepIdx >= 0 && i < stepIdx ? 'done' : ''}" aria-pressed="${i === stepIdx}" onclick="setStatus('${id}')"><span class="sdot" aria-hidden="true"></span>${label}</button>`).join('');
+  // Sources as icons on the same kind of line.
+  document.getElementById('fSource').innerHTML = SRC_OPTS.map(([id, cls, glyph, label], i) =>
+    `${i ? '<span class="conn" aria-hidden="true"></span>' : ''}` +
+    `<button type="button" aria-pressed="${state.source === id}" title="${label}" aria-label="${label}" onclick="setSource('${id}')"><span class="src ${cls}">${glyph}</span></button>`).join('');
+  // The extra filters live under "More"; the button shows when a hidden one is active.
+  document.getElementById('moreFilters').hidden = !state.more;
+  const moreBtn = document.getElementById('moreBtn');
+  moreBtn.setAttribute('aria-expanded', String(!!state.more));
+  moreBtn.classList.toggle('set', !state.more && (state.status !== 'all' || state.source !== 'all' || state.stages.size !== STAGES.length));
   document.getElementById('stageChips').innerHTML = `<span class="lbl">Stage:</span>` + STAGES.map(s => {
     const on = state.stages.has(s.id);
     const n = all.filter(c => c.stage === s.id).length;
@@ -541,7 +588,7 @@ function renderDrawer() {
         ${d.match_reason ? `<div class="reason">${esc(d.match_reason)}</div>` : ''}
       </div>
 
-      <div class="label">Summary <span class="ai${Object.prototype.hasOwnProperty.call(state.draft, 'summary') ? ' user' : ''}" id="summarySource">${Object.prototype.hasOwnProperty.call(state.draft, 'summary') ? 'Suggested by you' : 'AI · editable'}</span></div>
+      <div class="label">Summary <span class="ai${d.summary_edited_by_user ? ' user' : ''}" id="summarySource">${d.summary_edited_by_user ? 'Suggested by you' : 'AI · editable'}</span></div>
       <textarea class="edit" rows="2" oninput="edit('summary', this.value)">${esc(d.summary)}</textarea>
 
       <div class="label">What you talked about <span class="ai" style="color:var(--muted)">one per line, max 3</span></div>
@@ -656,6 +703,37 @@ function toggleStage(id) {
   renderAll();
 }
 function setSort(key) { state.sort = key; renderAll(); }
+// Clicking the selected step or icon again clears that filter.
+function setStatus(id) { state.status = state.status === id ? 'all' : id; state.statFilter = null; renderAll(); }
+function setSource(id) { state.source = state.source === id ? 'all' : id; state.statFilter = null; renderAll(); }
+function toggleMore() { state.more = !state.more; renderFilters(); }
+
+async function signOut() { if (!db.live) { location.reload(); return; } try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
+function openSettings() {
+  const wrap = document.createElement('div');
+  wrap.className = 'dialog-wrap';
+  wrap.innerHTML = `<div class="dscrim"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Settings">
+      <h3>Settings</h3>
+      <div class="set-row"><span>Account</span><b>${db.live ? 'Signed in with Supabase' : 'Demo mode · local data'}</b></div>
+      <div class="set-row"><span>Voice memos</span><b>Transcribed only, audio never stored</b></div>
+      <div class="set-row"><span>Version</span><b>Syncy prototype · phase 1</b></div>
+      <div class="dactions" style="margin-top:18px">
+        ${db.live ? '' : '<button class="btn" data-act="reset">Reset demo data</button>'}
+        <button class="btn" data-act="close">Close</button>
+        <button class="btn btn-danger" data-act="signout">Sign out</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const done = () => { document.removeEventListener('keydown', onKey, true); wrap.classList.remove('open'); setTimeout(() => wrap.remove(), 200); };
+  const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); done(); } };
+  document.addEventListener('keydown', onKey, true);
+  wrap.querySelector('.dscrim').addEventListener('click', done);
+  wrap.querySelector('[data-act="close"]').addEventListener('click', done);
+  wrap.querySelector('[data-act="reset"]')?.addEventListener('click', () => { localStorage.clear(); location.reload(); });
+  wrap.querySelector('[data-act="signout"]').addEventListener('click', async () => { done(); await signOut(); });
+  requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add('open')));
+}
 const discardPrompt = () => confirmDialog({
   title: 'Discard unsaved changes?',
   message: 'Your edits to this contact have not been saved and will be lost.',
@@ -706,6 +784,7 @@ function markDirty() {
 function edit(field, value) {
   state.draft[field] = value === '' ? null : value;
   if (field === 'summary') {
+    state.draft.summary_edited_by_user = true;
     const source = document.getElementById('summarySource');
     if (source) { source.textContent = 'Suggested by you'; source.classList.add('user'); }
   }
@@ -734,10 +813,15 @@ function copyDraft(btn) {
   btn.textContent = 'Copied ✓';
   setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
-async function signOut() { try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
-
+// A Claude-style greeting instead of a static page title.
+(function setGreeting() {
+  const h = new Date().getHours();
+  const timed = h < 5 ? 'Up late? 🌙' : h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 👋' : 'Good evening 🌆';
+  const playful = ['How is it going?', 'Welcome back 👋', 'Nice to see you again', 'Ready to follow up?', 'Who did you meet today?'];
+  document.getElementById('pageTitle').textContent = Math.random() < 0.5 ? timed : playful[Math.floor(Math.random() * playful.length)];
+})();
 document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; state.statFilter = null; renderRows(); document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden'; });
-[['fProject', 'project'], ['fEvent', 'event'], ['fDue', 'due'], ['fStatus', 'status'], ['fSource', 'source'], ['sortSel', 'sort']].forEach(([id, key]) =>
+[['fProject', 'project'], ['fEvent', 'event'], ['fDue', 'due'], ['sortSel', 'sort']].forEach(([id, key]) =>
   document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; if (key !== 'sort') state.statFilter = null; renderAll(); }));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.openId) closeDrawer(); });
 // The phone app saved something in another tab.
