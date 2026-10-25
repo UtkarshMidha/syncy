@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3efe9">
 <title>Syncy contacts</title>
 <!--
   Contacts dashboard. Reads and writes the same rows as the phone app through data.js,
@@ -28,6 +29,8 @@
   --purple-soft: #efe8f9;
   --grey-soft: #f1ebe3;
   --danger: #c2372b;
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-drawer: cubic-bezier(.32, .72, 0, 1);
   --linkedin: #0a66c2;
   --xing: #026466;
   --shadow: 0 1px 2px rgba(40, 28, 16, .06), 0 6px 18px rgba(40, 28, 16, .07);
@@ -37,16 +40,18 @@
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 14.5px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
 button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; border: 0; background: none; }
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+button { cursor: pointer; border: 0; background: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+a { touch-action: manipulation; }
 
-.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100dvh; }
 
 /* ---------- sidebar ---------- */
-.side { background: #1f1b17; color: #efe6db; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+.side { background: #1f1b17; color: #efe6db; padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100dvh; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; margin: 0 8px 22px; color: #fff; }
 .logo { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd27a, var(--accent-2) 45%, var(--accent) 100%); box-shadow: 0 0 14px rgba(243, 163, 63, .6); }
 .nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: #cbbfb1; text-decoration: none; text-align: left; }
-.nav:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+@media (hover: hover) and (pointer: fine) { .nav:hover { background: rgba(255, 255, 255, .06); color: #fff; } }
 .nav.on { background: rgba(255, 255, 255, .1); color: #fff; font-weight: 600; }
 .nav .count { margin-left: auto; font-size: 12px; color: #a99c8d; }
 .side .spacer { flex: 1; }
@@ -59,9 +64,24 @@ button { cursor: pointer; border: 0; background: none; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-weight: 600; background: var(--grey-soft); text-decoration: none; color: var(--ink); }
 .btn-primary { background: linear-gradient(135deg, var(--accent), #ef7d33); color: #fff; box-shadow: 0 6px 16px rgba(228, 96, 42, .28); }
 
+/* ---------- glossy UI ---------- */
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::before {
+  content: ''; position: absolute; left: 2px; right: 2px; top: 2px; height: 48%; pointer-events: none;
+  border-radius: inherit; border-bottom-left-radius: 50% 35%; border-bottom-right-radius: 50% 35%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .07));
+}
+.avatar { position: relative; overflow: hidden; }
+.avatar::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(130% 80% at 30% 15%, rgba(255, 255, 255, .6), rgba(255, 255, 255, .14) 40%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(0, 0, 0, .1));
+}
+.stat { background: linear-gradient(180deg, #fff 0%, #fdf8f1 100%); }
+
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 12px; margin: 20px 0 18px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; text-align: left; box-shadow: var(--shadow); transition: transform .12s, border-color .12s; }
-button.stat:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+@media (hover: hover) and (pointer: fine) { button.stat:hover { transform: translateY(-1px); border-color: var(--accent-2); } }
 .stat.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
 .stat .num { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
 .stat .lbl { color: var(--muted); font-size: 13px; }
@@ -94,7 +114,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .thead button.on { color: var(--ink); }
 .row { border-bottom: 1px solid var(--line); cursor: pointer; transition: background .1s; }
 .row:last-child { border-bottom: 0; }
-.row:hover { background: #fffaf3; }
+@media (hover: hover) and (pointer: fine) { .row:hover { background: #fffaf3; } }
 .row:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
 .row.open { background: var(--accent-soft); }
 .person { display: flex; gap: 10px; align-items: center; min-width: 0; }
@@ -116,7 +136,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .met { font-size: 12.5px; color: var(--muted); }
 .met b { color: var(--ink); font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .evlink { color: var(--accent-ink); font-size: 12.5px; text-decoration: none; }
-.evlink:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) { .evlink:hover { text-decoration: underline; } }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
 
 .st-to_follow_up { background: var(--accent-soft); color: var(--accent-ink); }
@@ -126,18 +146,22 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 .st-not_relevant { background: var(--grey-soft); color: var(--muted); }
 
 /* ---------- drawer ---------- */
-.scrim { position: fixed; inset: 0; background: rgba(31, 27, 23, .28); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+.scrim { position: fixed; inset: 0; background: rgba(31, 27, 23, .28); opacity: 0; pointer-events: none; transition: opacity .3s ease; z-index: 20; }
 .scrim.show { opacity: 1; pointer-events: auto; }
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--panel); box-shadow: -10px 0 40px rgba(0, 0, 0, .15); transform: translateX(100%); transition: transform .22s ease; z-index: 21; display: flex; flex-direction: column; }
+.scrim:not(.show) { transition-duration: .2s; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--panel); box-shadow: -10px 0 40px rgba(0, 0, 0, .15); transform: translateX(100%); transition: transform .4s var(--ease-drawer); z-index: 21; display: flex; flex-direction: column; }
 .drawer.show { transform: none; }
+.drawer:not(.show) { transition-duration: .28s; }
 .dhead { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: flex-start; }
 .dhead .avatar { width: 52px; height: 52px; font-size: 18px; }
 .dhead .x { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--grey-soft); flex: none; font-size: 16px; }
 .dhead input.title { font-size: 20px; font-weight: 700; letter-spacing: -.01em; border: 1px solid transparent; border-radius: 8px; padding: 2px 6px; margin-left: -6px; width: 100%; background: transparent; }
-.dhead input.title:hover, .dhead input.title:focus { border-color: var(--line); background: #fff; outline: 0; }
+.dhead input.title:focus { border-color: var(--line); background: #fff; outline: 0; }
+@media (hover: hover) and (pointer: fine) { .dhead input.title:hover { border-color: var(--line); background: #fff; outline: 0; } }
 .dbody { padding: 6px 20px 30px; overflow-y: auto; flex: 1; }
 .label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; display: flex; justify-content: space-between; align-items: center; }
 .label .ai { text-transform: none; letter-spacing: 0; color: var(--accent); font-weight: 600; }
+.label .label-actions { display: inline-flex; align-items: center; gap: 10px; }
 .box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .match { border: 1.5px solid var(--accent-2); background: linear-gradient(180deg, #fff8ef, #fff); border-radius: 12px; padding: 12px 14px; }
 .match .reason { margin-top: 8px; font-size: 13.5px; }
@@ -197,23 +221,63 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
   .seg button, .copy { min-height: 44px; padding: 10px 12px; }
   .mobile-nav {
     position: fixed; z-index: 10; inset: auto 0 0; display: flex;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid var(--line); background: var(--panel);
-    box-shadow: 0 -4px 18px rgba(40, 28, 16, .08);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--panel) 80%, transparent);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   }
   .mobile-nav a {
     flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px; padding: 4px 0;
     color: var(--muted); text-decoration: none; font-size: 11px; line-height: 1.2;
+    transition: transform 140ms var(--ease-out);
   }
+  .mobile-nav a:active { transform: scale(.92); }
   .mobile-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
   .mobile-nav svg { width: 24px; height: 24px; }
+  .mobile-nav a svg { filter: grayscale(1) opacity(.45); transition: filter .15s; }
+  .mobile-nav a[aria-current="page"] svg { filter: drop-shadow(0 2px 3px rgba(228, 96, 42, .25)); }
 }
 @media (max-width: 360px) {
   .main { padding-right: 12px; padding-left: 12px; }
   .two, .half { grid-template-columns: 1fr; }
   .mobile-nav a { font-size: 10.5px; }
 }
+/* ---------- press feedback ---------- */
+.btn, .nav, .chipbtn, .seg button, .dhead .x { transition: transform 140ms var(--ease-out); }
+.btn:active:not(:disabled), .nav:active, .chipbtn:active, .seg button:active { transform: scale(.97); }
+.dhead .x:active { transform: scale(.94); }
+button.stat:active { transform: scale(.97) rotate(-1.6deg); }
+button.stat:nth-child(even):active { transform: scale(.97) rotate(1.6deg); }
+
+/* ---------- hover wiggle on clickables (hover-capable devices only) ---------- */
+@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1.2deg); } 55% { transform: rotate(1.2deg); } 80% { transform: rotate(-.5deg); } }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled), .nav:hover, .chipbtn:hover, .seg button:hover, button.stat:hover,
+  .copy:hover, .clear:hover, .dhead .x:hover, .mobile-nav a:hover { animation: wiggle .4s var(--ease-out); }
+}
+
+/* ---------- toasts (Sonner-style: transitions, not keyframes) ---------- */
+.toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 80; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; background: #241f1a; color: #fff; font-size: 13.5px; font-weight: 500; line-height: 1.4; padding: 11px 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .22); transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
+.toast::before { font-weight: 800; flex: none; }
+.toast.success::before { content: '✓'; color: #7ce0a3; }
+.toast.error::before { content: '!'; color: #ffb3a7; }
+.toast[data-state="pre"] { opacity: 0; transform: translateY(12px) scale(.97); }
+.toast[data-state="out"] { opacity: 0; transform: translateY(6px) scale(.98); transition-duration: .2s; }
+
+/* ---------- confirm dialog (replaces confirm(); modal, so it scales from center) ---------- */
+.dialog-wrap { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; }
+.dialog-wrap .dscrim { position: absolute; inset: 0; background: rgba(31, 27, 23, .42); opacity: 0; transition: opacity .25s ease; }
+.dialog { position: relative; width: min(400px, 100%); background: var(--panel); border-radius: 16px; padding: 20px; box-shadow: 0 24px 70px rgba(0, 0, 0, .28); opacity: 0; transform: scale(.96); transition: transform .2s var(--ease-out), opacity .2s var(--ease-out); }
+.dialog-wrap.open .dscrim { opacity: 1; }
+.dialog-wrap.open .dialog { opacity: 1; transform: none; }
+.dialog-wrap:not(.open) .dialog, .dialog-wrap:not(.open) .dscrim { transition-duration: .15s; }
+.dialog h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.dialog p { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+.dialog .dactions { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-danger { background: var(--danger); color: #fff; box-shadow: 0 6px 16px rgba(194, 55, 43, .3); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
@@ -231,7 +295,7 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
   <main class="main">
     <div class="head">
       <div>
-        <h1>Contacts</h1>
+        <h1 id="pageTitle">Welcome back 👋</h1>
         <p id="subline"></p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="index.html">＋ Scan a new contact</a><button class="btn" onclick="signOut()">Sign out</button></div>
@@ -280,10 +344,10 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
     </div>
   </main>
   <nav class="mobile-nav" aria-label="Main navigation">
-    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Today</a>
-    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>Contacts</a>
-    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>Projects</a>
-    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
+    <a href="index.html" aria-label="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#f08c18"/></linearGradient></defs><g fill="none" stroke="#f3a33f" stroke-width="2" stroke-linecap="round"><path d="M12 2.2v2M12 19.8v2M2.2 12h2M19.8 12h2M4.8 4.8l1.4 1.4M17.8 17.8l1.4 1.4M4.8 19.2l1.4-1.4M17.8 6.2l1.4-1.4"/></g><circle cx="12" cy="12" r="5.2" fill="url(#gi-sun)"/><ellipse cx="10.3" cy="9.9" rx="2.6" ry="1.7" fill="#fff" opacity=".55"/></svg>Today</a>
+    <a href="index.html?tab=contacts" aria-label="Contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient></defs><g fill="url(#gi-p2)"><circle cx="16.6" cy="8.1" r="2.9"/><path d="M11.6 20c.6-3.4 2.6-5.2 5-5.2s4.4 1.8 5 5.2z"/></g><g fill="url(#gi-p1)"><circle cx="8.4" cy="7.4" r="3.6"/><path d="M2.2 20c.7-4 3.2-6.1 6.2-6.1s5.5 2.1 6.2 6.1z"/></g><ellipse cx="7.3" cy="5.9" rx="1.7" ry="1.1" fill="#fff" opacity=".55"/><ellipse cx="15.8" cy="6.9" rx="1.3" ry=".9" fill="#fff" opacity=".5"/></svg>Contacts</a>
+    <a href="index.html?tab=projects" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><path d="M3 6.5c0-1.1.9-2 2-2h4.2l2 2.3H19c1.1 0 2 .9 2 2V17c0 1.7-1.3 3-3 3H6c-1.7 0-3-1.3-3-3z" fill="url(#gi-fo)"/><path d="M3 8.8h18v1.6H3z" fill="#fff" opacity=".25"/><ellipse cx="8" cy="7.2" rx="3.2" ry="1.1" fill="#fff" opacity=".4"/></svg>Projects</a>
+    <a href="dashboard.html" aria-current="page" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gi-d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb470"/><stop offset="1" stop-color="#e4602a"/></linearGradient><linearGradient id="gi-d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient><linearGradient id="gi-d4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><rect x="3" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d1)"/><rect x="12.6" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d2)"/><rect x="3" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d3)"/><rect x="12.6" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d4)"/><ellipse cx="7.2" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/><ellipse cx="16.8" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/></svg>Dashboard</a>
   </nav>
 </div>
 
@@ -498,7 +562,7 @@ function renderDrawer() {
       <div class="two">${input('next_step')}
         <input class="edit" type="date" value="${d.next_step_date || ''}" onchange="edit('next_step_date', this.value || null)" aria-label="Due date"></div>
 
-      <div class="label">Follow-up draft <button class="copy" onclick="copyDraft(this)">Copy</button></div>
+      <div class="label">Follow-up draft <span class="label-actions">${srcBadge(c.source, c.profile_url)}<button class="copy" onclick="copyDraft(this)">Copy</button></span></div>
       <textarea class="edit" rows="4" onchange="edit('follow_up_draft', this.value)">${esc(d.follow_up_draft)}</textarea>
 
       <div class="label">Your notes</div>
@@ -520,6 +584,61 @@ function renderDrawer() {
 }
 
 function renderAll() { renderStats(); renderFilters(); renderRows(); renderDrawer(); }
+
+// ---------- toast + confirm dialog (replace alert()/confirm()) ----------
+function toast(message, opts = {}) {
+  let host = document.getElementById('toasts');
+  if (!host) { host = document.createElement('div'); host.id = 'toasts'; host.className = 'toasts'; host.setAttribute('aria-live', 'polite'); document.body.appendChild(host); }
+  while (host.children.length >= 3) host.firstChild.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${opts.type || ''}`.trim();
+  el.setAttribute('role', 'status');
+  el.textContent = message;
+  el.dataset.state = 'pre';
+  host.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => { delete el.dataset.state; }));
+  const hide = () => {
+    if (el.dataset.state === 'out') return;
+    el.dataset.state = 'out';
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 350);
+  };
+  setTimeout(hide, opts.duration || (opts.type === 'error' ? 5000 : 3000));
+  el.addEventListener('click', hide);
+}
+function confirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false }) {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dialog-wrap';
+    wrap.innerHTML = `<div class="dscrim"></div>
+      <div class="dialog" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+        <h3>${esc(title)}</h3>${message ? `<p>${esc(message)}</p>` : ''}
+        <div class="dactions">
+          <button class="btn" data-act="no">${esc(cancelLabel)}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-act="yes">${esc(confirmLabel)}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    const done = result => {
+      document.removeEventListener('keydown', onKey, true);
+      wrap.classList.remove('open');
+      wrap.querySelector('.dialog').addEventListener('transitionend', () => wrap.remove(), { once: true });
+      setTimeout(() => wrap.remove(), 300);
+      resolve(result);
+    };
+    const onKey = e => {
+      if (e.key === 'Escape') { e.stopPropagation(); done(false); }
+      else if (e.key === 'Enter') { e.stopPropagation(); done(true); }
+    };
+    document.addEventListener('keydown', onKey, true);
+    wrap.querySelector('.dscrim').addEventListener('click', () => done(false));
+    wrap.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => done(b.dataset.act === 'yes')));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      wrap.classList.add('open');
+      wrap.querySelector('[data-act="no"]').focus();
+    }));
+  });
+}
 
 // ---------- actions ----------
 function isFiltered() {
@@ -551,28 +670,40 @@ function toggleStage(id) {
   renderAll();
 }
 function setSort(key) { state.sort = key; renderAll(); }
-function openDrawer(id) {
-  if (id !== state.openId && dirty() && !confirm('Discard unsaved changes to this contact?')) return;
+const discardPrompt = () => confirmDialog({
+  title: 'Discard unsaved changes?',
+  message: 'Your edits to this contact have not been saved and will be lost.',
+  confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', danger: true,
+});
+async function openDrawer(id) {
+  if (id !== state.openId && dirty() && !(await discardPrompt())) return;
   if (id !== state.openId) state.draft = {};
   state.openId = id; renderRows(); renderDrawer();
 }
-function closeDrawer() {
-  if (dirty() && !confirm('Discard unsaved changes?')) return;
+async function closeDrawer() {
+  if (dirty() && !(await discardPrompt())) return;
   state.draft = {}; state.openId = null; renderRows(); renderDrawer();
 }
 
 async function deleteContact(id, button) {
   const contact = db.get('contacts', id);
-  if (!contact || !confirm(`Delete ${contact.name || 'this contact'} and its note and recording? This cannot be undone.`)) return;
+  if (!contact) return;
+  const ok = await confirmDialog({
+    title: `Delete ${contact.name || 'this contact'}?`,
+    message: 'The note and recording are deleted too. This cannot be undone.',
+    confirmLabel: 'Delete contact', cancelLabel: 'Keep contact', danger: true,
+  });
+  if (!ok) return;
   button.disabled = true; button.textContent = 'Deleting…';
   try {
     const result = await db.deleteContact(id);
     state.openId = null;
     renderAll();
-    if (!result.audioRemoved) alert('The contact was deleted, but its audio file could not be removed from Storage.');
+    toast('Contact deleted', { type: 'success' });
+    if (!result.audioRemoved) toast('The audio file could not be removed from Storage.', { type: 'error' });
   } catch (error) {
     button.disabled = false; button.textContent = 'Delete contact';
-    alert(`Could not delete contact: ${error.message || error}`);
+    toast(`Could not delete contact: ${error.message || error}`, { type: 'error' });
   }
 }
 
@@ -602,8 +733,7 @@ function saveDraft() {
   db.update('contacts', state.openId, state.draft);
   state.draft = {};
   renderAll();
-  const note = document.getElementById('saveState');
-  if (note) { note.textContent = 'Saved ✓'; note.classList.add('ok'); }
+  toast('Changes saved', { type: 'success' });
 }
 function discardDraft() { state.draft = {}; renderDrawer(); }
 function copyDraft(btn) {
@@ -611,15 +741,22 @@ function copyDraft(btn) {
   btn.textContent = 'Copied ✓';
   setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
-async function signOut() { try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+async function signOut() { try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
 
+// A Claude-style greeting instead of a static page title.
+(function setGreeting() {
+  const h = new Date().getHours();
+  const timed = h < 5 ? 'Up late? 🌙' : h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 👋' : 'Good evening 🌆';
+  const playful = ['How is it going?', 'Welcome back 👋', 'Nice to see you again', 'Ready to follow up?', 'Who did you meet today?'];
+  document.getElementById('pageTitle').textContent = Math.random() < 0.5 ? timed : playful[Math.floor(Math.random() * playful.length)];
+})();
 document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; state.statFilter = null; renderRows(); document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden'; });
 [['fProject', 'project'], ['fEvent', 'event'], ['fDue', 'due'], ['fStatus', 'status'], ['fSource', 'source'], ['sortSel', 'sort']].forEach(([id, key]) =>
   document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; if (key !== 'sort') state.statFilter = null; renderAll(); }));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.openId) closeDrawer(); });
 // The phone app saved something in another tab.
 window.addEventListener('db-change', () => { if (state.openId && !db.get('contacts', state.openId)) state.openId = null; renderAll(); });
-window.addEventListener('db-error', e => alert(`Could not sync with Supabase: ${e.detail}`));
+window.addEventListener('db-error', e => toast(`Could not sync with Supabase: ${e.detail}`, { type: 'error' }));
 window.addEventListener('auth-change', () => location.replace('login.html?next=dashboard.html'));
 db.init().then(authenticated => {
   if (!authenticated) { location.replace('login.html?next=dashboard.html'); return; }

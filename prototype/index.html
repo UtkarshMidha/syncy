@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fffdf9">
 <title>Syncy</title>
 <!--
   Phase 1 phone flow: choose / create event → scan → note → AI processing → review and save.
@@ -26,9 +27,13 @@
   --xing: #026466;
   --shadow: 0 1px 2px rgba(40, 28, 16, .06), 0 6px 18px rgba(40, 28, 16, .07);
   --radius: 16px;
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-in-out: cubic-bezier(.77, 0, .175, 1);
+  --ease-drawer: cubic-bezier(.32, .72, 0, 1);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; overscroll-behavior: none; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -36,7 +41,8 @@ body {
   display: flex; align-items: center; justify-content: center; gap: 48px;
   padding: 24px;
 }
-button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+a { touch-action: manipulation; }
 input, textarea, select { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
 
@@ -73,6 +79,24 @@ input, textarea, select { font: inherit; color: inherit; }
 .tabbar button, .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); padding: 4px 0; text-decoration: none; }
 .tabbar button.on { color: var(--accent); font-weight: 600; }
 .tabbar svg { width: 24px; height: 24px; }
+
+/* ---------- glossy UI ---------- */
+.tabbar { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: color-mix(in srgb, var(--phone) 80%, transparent); }
+.tabbar button svg, .tabbar a svg { filter: grayscale(1) opacity(.45); transition: filter .15s; }
+.tabbar button.on svg { filter: drop-shadow(0 2px 3px rgba(228, 96, 42, .25)); }
+.avatar, .face, .pthumb, .mic, .logo { position: relative; overflow: hidden; }
+.avatar::after, .face::after, .pthumb::after, .mic::after, .logo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(130% 80% at 30% 15%, rgba(255, 255, 255, .6), rgba(255, 255, 255, .14) 40%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(0, 0, 0, .1));
+}
+.btn-primary, .scan-cta, .btn-danger { position: relative; overflow: hidden; }
+.btn-primary::before, .scan-cta::before, .btn-danger::before {
+  content: ''; position: absolute; left: 2px; right: 2px; top: 2px; height: 48%; pointer-events: none;
+  border-radius: inherit; border-bottom-left-radius: 50% 35%; border-bottom-right-radius: 50% 35%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .07));
+}
+.seg button.on { background: linear-gradient(180deg, #fff, #f7f0e7); }
 
 /* ---------- common ---------- */
 .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -115,7 +139,7 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .ev-option { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; }
 .ev-option .ev-select { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 0; text-align: left; }
 .ev-del { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); background: #f6f1ea; font-size: 12px; }
-.ev-del:hover { color: #b42318; background: #fdebe8; }
+@media (hover: hover) and (pointer: fine) { .ev-del:hover { color: #b42318; background: #fdebe8; } }
 .ev-option .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
 .ev-option.on { border-color: var(--accent); background: #fff8f2; }
 .ev-option.on .radio { border-color: var(--accent); }
@@ -178,7 +202,7 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .viewfinder .br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 14px 0; }
 .viewfinder .line { position: absolute; left: 24px; right: 24px; height: 2px; background: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); animation: scan 2s ease-in-out infinite; }
 @keyframes scan { 0%, 100% { top: 30px; } 50% { top: 198px; } }
-.viewfinder .qr { width: 140px; height: 140px; border-radius: 8px; opacity: .2; filter: blur(2px); transition: all .35s; }
+.viewfinder .qr { width: 140px; height: 140px; border-radius: 8px; opacity: .2; filter: blur(2px); transition: opacity .35s var(--ease-out), filter .35s var(--ease-out); }
 .viewfinder.hit .qr { opacity: 1; filter: none; }
 .viewfinder.hit .line { display: none; }
 .viewfinder.hit .corner { border-color: #5be38f; }
@@ -191,7 +215,7 @@ textarea.edit:focus, input.edit:focus, select.edit:focus { outline: 2px solid va
 .demo-pick { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); border-radius: var(--radius); padding: 12px; margin-top: 8px; }
 .demo-pick p { margin: 0 0 8px; font-size: 12.5px; color: #bfb3a6; }
 .chip { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 12px; background: rgba(255, 255, 255, .08); color: #fff; margin-top: 6px; text-align: left; }
-.chip:hover:not(:disabled) { background: rgba(255, 255, 255, .16); }
+@media (hover: hover) and (pointer: fine) { .chip:hover:not(:disabled) { background: rgba(255, 255, 255, .16); } }
 .chip:disabled { opacity: .4; cursor: default; }
 .chip .avatar { width: 30px; height: 30px; font-size: 12px; }
 .chip small { color: #bfb3a6; display: block; font-size: 12px; }
@@ -252,6 +276,9 @@ ul.bul li { margin: 3px 0; }
 .copy { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
 .label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 6px; display: flex; justify-content: space-between; align-items: center; }
 .label .ai { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--accent); }
+.label .label-actions { display: inline-flex; align-items: center; gap: 10px; }
+.nextstep { display: flex; gap: 10px; align-items: center; }
+.btn-done { background: var(--ok-soft); color: var(--ok); }
 
 /* ---------- saved ---------- */
 .success { text-align: center; padding: 16px 0 6px; }
@@ -280,6 +307,54 @@ ul.bul li { margin: 3px 0; }
 .face-more { background: var(--line); color: var(--muted); font-size: 11px; }
 .dropzone.flash { outline: 2px solid var(--accent-2); outline-offset: 3px; }
 details.card > summary { min-height: 44px; display: flex; align-items: center; }
+
+/* ---------- collapsible contact groups ---------- */
+.group-toggle { width: 100%; cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 44px; text-align: left; }
+.group-toggle .chev { display: inline-block; transition: transform .2s var(--ease-out); }
+.group-toggle[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+
+/* ---------- tab name mirrors into the headline ---------- */
+.tabbar .tlbl { transition: opacity .25s var(--ease-out), transform .25s var(--ease-out); }
+.tabbar button.on .tlbl { opacity: 0; transform: translateY(8px); }
+.title.fly { animation: title-rise .35s var(--ease-out) both; }
+@keyframes title-rise { from { opacity: 0; transform: translateY(16px); } }
+
+/* ---------- hover wiggle on clickables (hover-capable devices only) ---------- */
+@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1.4deg); } 55% { transform: rotate(1.4deg); } 80% { transform: rotate(-.6deg); } }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled), .chip:hover:not(:disabled), .icon-btn:hover, .proj-action:hover,
+  .tabbar button:hover, .tabbar a:hover, .linkbtn:hover, .copy:hover, .seg button:hover,
+  .pchip:hover, .urlrow button:hover, .group-toggle:hover { animation: wiggle .4s var(--ease-out); }
+}
+
+/* ---------- press feedback: every pressable element responds on pointer-down ---------- */
+.btn, .scan-cta, .icon-btn, .chip, .proj-action, .mic, .seg button, .urlrow button, .tabbar button, .tabbar a { transition: transform 160ms var(--ease-out); }
+.btn:active:not(:disabled), .scan-cta:active, .icon-btn:active, .chip:active:not(:disabled), .proj-action:active, .seg button:active, .urlrow button:active { transform: scale(.97); }
+.mic:active { transform: scale(.95); }
+.tabbar button:active, .tabbar a:active { transform: scale(.92); }
+
+/* ---------- toasts (Sonner-style: transitions, not keyframes; interruptible) ---------- */
+.toasts { position: absolute; left: 14px; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 60; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 100%; background: #241f1a; color: #fff; font-size: 13.5px; font-weight: 500; line-height: 1.4; padding: 10px 15px; border-radius: 14px; box-shadow: 0 8px 26px rgba(0, 0, 0, .28); transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
+.toast::before { font-weight: 800; flex: none; }
+.toast.success::before { content: '✓'; color: #7ce0a3; }
+.toast.error::before { content: '!'; color: #ffb3a7; }
+.toast[data-state="pre"] { opacity: 0; transform: translateY(14px) scale(.97); }
+.toast[data-state="out"] { opacity: 0; transform: translateY(8px) scale(.97); transition-duration: .2s; }
+
+/* ---------- bottom action sheet (replaces confirm(); iOS drawer curve from Vaul) ---------- */
+.sheet-wrap { position: absolute; inset: 0; z-index: 55; }
+.sheet-scrim { position: absolute; inset: 0; background: rgba(20, 15, 10, .42); opacity: 0; transition: opacity .3s ease; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--phone); border-radius: 22px 22px 0 0; padding: 10px 18px calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateY(100%); transition: transform .45s var(--ease-drawer); box-shadow: 0 -12px 40px rgba(0, 0, 0, .22); }
+.sheet-wrap.open .sheet-scrim { opacity: 1; }
+.sheet-wrap.open .sheet { transform: translateY(0); }
+.sheet-wrap:not(.open) .sheet { transition-duration: .3s; }
+.sheet-wrap:not(.open) .sheet-scrim { transition-duration: .2s; }
+.sheet .grab { width: 36px; height: 4px; border-radius: 999px; background: var(--line); margin: 0 auto 14px; }
+.sheet h3 { margin: 0 0 4px; font-size: 16.5px; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.sheet p { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
+.sheet .btn { width: 100%; margin-top: 8px; }
+.btn-danger { background: #d93a2b; color: #fff; box-shadow: 0 6px 16px rgba(217, 58, 43, .3); }
 @media (max-width: 760px) {
   input, textarea, select { font-size: 16px; }
 }
@@ -319,6 +394,55 @@ details.card > summary { min-height: 44px; display: flex; align-items: center; }
 <script src="data.js"></script>
 <script>
 const ACTIVE_KEY = 'syncy-active-event';
+
+// ---------- toast + action sheet (replace alert()/confirm()) ----------
+function toast(message, opts = {}) {
+  const phone = document.querySelector('.phone');
+  let host = document.getElementById('toasts');
+  if (!host) { host = document.createElement('div'); host.id = 'toasts'; host.className = 'toasts'; host.setAttribute('aria-live', 'polite'); phone.appendChild(host); }
+  while (host.children.length >= 3) host.firstChild.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${opts.type || ''}`.trim();
+  el.setAttribute('role', 'status');
+  el.textContent = message;
+  el.dataset.state = 'pre';
+  host.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => { delete el.dataset.state; }));
+  const hide = () => {
+    if (el.dataset.state === 'out') return;
+    el.dataset.state = 'out';
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 350);
+  };
+  setTimeout(hide, opts.duration || (opts.type === 'error' ? 5000 : 3000));
+  el.addEventListener('click', hide);
+}
+function confirmSheet({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false }) {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'sheet-wrap';
+    wrap.innerHTML = `<div class="sheet-scrim"></div>
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="grab"></div>
+        <h3>${esc(title)}</h3>${message ? `<p>${esc(message)}</p>` : ''}
+        <button class="btn btn-block ${danger ? 'btn-danger' : 'btn-primary'}" data-act="yes">${esc(confirmLabel)}</button>
+        <button class="btn btn-block" data-act="no">${esc(cancelLabel)}</button>
+      </div>`;
+    document.querySelector('.phone').appendChild(wrap);
+    const done = result => {
+      document.removeEventListener('keydown', onKey, true);
+      wrap.classList.remove('open');
+      wrap.querySelector('.sheet').addEventListener('transitionend', () => wrap.remove(), { once: true });
+      setTimeout(() => wrap.remove(), 450);
+      resolve(result);
+    };
+    const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } };
+    document.addEventListener('keydown', onKey, true);
+    wrap.querySelector('.sheet-scrim').addEventListener('click', () => done(false));
+    wrap.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => done(b.dataset.act === 'yes')));
+    requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add('open')));
+  });
+}
 
 // Demo profiles to "scan". Their notes come with a scripted AI result; any other note goes through simulateAI's heuristic.
 const PERSONAS = [
@@ -404,7 +528,7 @@ function srcBadge(source, url) {
 }
 function initials2(name) { return (String(name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) || '?').toUpperCase(); }
 function projTag(p) { return `<span class="ptag" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
-function projThumb(p) { return `<span class="pthumb" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
+function projThumb(p) { return p.emoji && p.emoji !== '📌' ? `<span class="pthumb" style="background:#f6f1ea">${esc(p.emoji)}</span>` : `<span class="pthumb" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
 const SOURCE_LABEL = { qr_linkedin: 'LinkedIn', qr_xing: 'Xing', qr_other: 'Profile', manual: 'Manual' };
 function fmtDate(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
 function addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
@@ -420,13 +544,15 @@ function qrSvg(seed) {
   return `<svg class="qr" viewBox="-1.5 -1.5 24 24"><rect x="-1.5" y="-1.5" width="24" height="24" fill="#fff"/><g fill="#111">${finder(0, 0)}${finder(14, 0)}${finder(0, 14)}${cells}</g></svg>`;
 }
 
+// Tab icons: glossy 3D-pack style — gradient fills with a white specular highlight.
+// Inactive tabs are desaturated in CSS, so one colorful set serves both states.
 const ICONS = {
-  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  contacts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>',
-  projects: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h4M8 17h7"/></svg>',
+  today: '<svg viewBox="0 0 24 24"><defs><linearGradient id="gi-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#f08c18"/></linearGradient></defs><g fill="none" stroke="#f3a33f" stroke-width="2" stroke-linecap="round"><path d="M12 2.2v2M12 19.8v2M2.2 12h2M19.8 12h2M4.8 4.8l1.4 1.4M17.8 17.8l1.4 1.4M4.8 19.2l1.4-1.4M17.8 6.2l1.4-1.4"/></g><circle cx="12" cy="12" r="5.2" fill="url(#gi-sun)"/><ellipse cx="10.3" cy="9.9" rx="2.6" ry="1.7" fill="#fff" opacity=".55"/></svg>',
+  contacts: '<svg viewBox="0 0 24 24"><defs><linearGradient id="gi-p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient></defs><g fill="url(#gi-p2)"><circle cx="16.6" cy="8.1" r="2.9"/><path d="M11.6 20c.6-3.4 2.6-5.2 5-5.2s4.4 1.8 5 5.2z"/></g><g fill="url(#gi-p1)"><circle cx="8.4" cy="7.4" r="3.6"/><path d="M2.2 20c.7-4 3.2-6.1 6.2-6.1s5.5 2.1 6.2 6.1z"/></g><ellipse cx="7.3" cy="5.9" rx="1.7" ry="1.1" fill="#fff" opacity=".55"/><ellipse cx="15.8" cy="6.9" rx="1.3" ry=".9" fill="#fff" opacity=".5"/></svg>',
+  projects: '<svg viewBox="0 0 24 24"><defs><linearGradient id="gi-fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><path d="M3 6.5c0-1.1.9-2 2-2h4.2l2 2.3H19c1.1 0 2 .9 2 2V17c0 1.7-1.3 3-3 3H6c-1.7 0-3-1.3-3-3z" fill="url(#gi-fo)"/><path d="M3 8.8h18v1.6H3z" fill="#fff" opacity=".25"/><ellipse cx="8" cy="7.2" rx="3.2" ry="1.1" fill="#fff" opacity=".4"/></svg>',
   qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>',
-  dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>',
+  dash: '<svg viewBox="0 0 24 24"><defs><linearGradient id="gi-d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb470"/><stop offset="1" stop-color="#e4602a"/></linearGradient><linearGradient id="gi-d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7ff"/><stop offset="1" stop-color="#2f6db5"/></linearGradient><linearGradient id="gi-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0a8"/><stop offset="1" stop-color="#2c8a57"/></linearGradient><linearGradient id="gi-d4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset="1" stop-color="#7a4bc0"/></linearGradient></defs><rect x="3" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d1)"/><rect x="12.6" y="3" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d2)"/><rect x="3" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d3)"/><rect x="12.6" y="12.6" width="8.4" height="8.4" rx="2.4" fill="url(#gi-d4)"/><ellipse cx="7.2" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/><ellipse cx="16.8" cy="5.3" rx="3" ry="1.2" fill="#fff" opacity=".4"/></svg>',
 };
 
 // ---------- navigation ----------
@@ -473,6 +599,7 @@ function go(screen, force = false) {
   saveNavigationState();
   clearTimers();
   if (['today', 'contacts', 'projects'].includes(screen)) ui.tab = screen;
+  if (screen !== ui.screen) ui.flyTitle = true;
   ui.screen = screen;
   if (screen !== 'contacts') ui.sel = null;
   if (navigationReady) {
@@ -537,14 +664,29 @@ function render() {
   const tb = document.getElementById('tabbar');
   tb.style.display = flow ? 'none' : 'flex';
   tb.innerHTML = [['today', 'Today'], ['contacts', 'Contacts'], ['projects', 'Projects']]
-    .map(([id, label]) => `<button type="button" class="${ui.tab === id ? 'on' : ''}" aria-current="${ui.tab === id ? 'page' : 'false'}" onclick="go('${id}')">${ICONS[id]}${label}</button>`).join('')
-    + `<a href="dashboard.html">${ICONS.dash}Dashboard</a>`;
+    .map(([id, label]) => `<button type="button" class="${ui.tab === id ? 'on' : ''}" aria-current="${ui.tab === id ? 'page' : 'false'}" onclick="go('${id}')">${ICONS[id]}<span class="tlbl">${label}</span></button>`).join('')
+    + `<a href="dashboard.html">${ICONS.dash}<span class="tlbl">Dashboard</span></a>`;
   const sideKey = ui.screen === 'today' && !ui.eventId ? 'picker' : ui.screen;
   document.querySelectorAll('#sideSteps li').forEach(li => li.classList.toggle('on', li.dataset.s === sideKey));
+  // The active tab's name "moves" to the top: its tabbar label hides and the headline rises in.
+  if (ui.flyTitle) { el.querySelector('.title')?.classList.add('fly'); ui.flyTitle = false; }
   AFTER[ui.screen]?.();
 }
 
 // ---------- screens ----------
+// A collapsible project group on the contacts tab; the header stays a drop target while collapsed.
+function contactGroup(pid, head, list, emptyText) {
+  const key = pid || 'none';
+  const collapsed = (ui.collapsed || (ui.collapsed = {}))[key];
+  return `<div class="dropzone" data-pid="${pid}">
+    <button type="button" class="section-title group-toggle" aria-expanded="${collapsed ? 'false' : 'true'}" onclick="toggleGroup('${key}')"><span class="chev" aria-hidden="true">▾</span>${head}</button>
+    ${collapsed ? '' : (list.length ? list.map(c => personRow(c, true)).join('') : `<div class="empty small">${emptyText}</div>`)}</div>`;
+}
+function toggleGroup(key) {
+  ui.collapsed = ui.collapsed || {};
+  ui.collapsed[key] = !ui.collapsed[key];
+  render();
+}
 function personRow(c, assignable) {
   const p = proj(c.project_id);
   const selecting = assignable && Array.isArray(ui.sel);
@@ -580,10 +722,8 @@ const SCREENS = {
         ? 'Tap the contacts to move, then choose a project below.'
         : 'Grouped by project. Drag a card onto a group (press and hold on the phone), or tap Select for several at once.'}
         Filters and sorting: <a href="dashboard.html" class="linkbtn">dashboard</a>.</p>
-      ${groups.map(g => `<div class="dropzone" data-pid="${g.p.id}"><div class="section-title">${projTag(g.p)} ${esc(g.p.name)} · ${g.list.length}</div>
-        ${g.list.length ? g.list.map(c => personRow(c, true)).join('') : '<div class="empty small">No one yet</div>'}</div>`).join('')}
-      <div class="dropzone" data-pid=""><div class="section-title">No project yet · ${none.length}</div>
-        ${none.length ? none.map(c => personRow(c, true)).join('') : '<div class="empty small">Everyone is assigned</div>'}</div>
+      ${groups.map(g => contactGroup(g.p.id, `${projTag(g.p)} ${esc(g.p.name)} · ${g.list.length}`, g.list, 'No one yet')).join('')}
+      ${contactGroup('', `No project yet · ${none.length}`, none, 'Everyone is assigned')}
       ${selecting && ui.sel.length ? `<div class="card assignbar">
         <div class="small" style="font-weight:650">${ui.sel.length} selected → assign to</div>
         <div class="pchips" style="margin-top:8px">
@@ -596,17 +736,6 @@ const SCREENS = {
     return `
       <div class="title">Your projects</div>
       <p class="sub small">The AI compares every new contact with these descriptions. Imported Notion projects are copied into Syncy and work like your other projects.</p>
-      <div class="card projects-import">
-        <div style="font-weight:700">Import projects from Notion</div>
-        <p class="muted small">Connect a workspace, choose a shared projects database, and copy its projects into Syncy.</p>
-        ${notionUi.connected ? `<div class="muted small" style="margin-bottom:10px">Connected${notionUi.workspace ? ` to ${esc(notionUi.workspace)}` : ''} · Notion access stays private to your account</div>
-          <button class="btn" onclick="loadNotionSources()" ${notionUi.busy ? 'disabled' : ''}>Choose database</button>
-          ${notionUi.sources.length ? `<label class="field"><span>Projects database</span><select class="edit" id="notionSource" onchange="notionUi.selected=this.value">${notionUi.sources.map(source => `<option value="${esc(source.id)}" ${source.id === notionUi.selected ? 'selected' : ''}>${esc(source.title)}</option>`).join('')}</select></label>
-            <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="importNotionProjects()" ${notionUi.busy ? 'disabled' : ''}>${notionUi.busy ? 'Importing…' : 'Import projects'}</button>` : ''}
-          <button class="linkbtn" style="margin:10px 0 0 10px" onclick="connectNotion()" ${notionUi.busy ? 'disabled' : ''}>Reconnect</button>`
-          : `<button class="btn btn-primary" onclick="connectNotion()" ${notionUi.busy ? 'disabled' : ''}>${notionUi.busy ? 'Connecting…' : 'Connect Notion'}</button>`}
-        ${notionUi.message ? `<div class="muted small" role="status" style="margin-top:10px">${esc(notionUi.message)}</div>` : ''}
-      </div>
       ${projects().map(p => {
         if (ui.projForm === p.id) return projectFormHtml(p);
         const list = all.filter(c => c.project_id === p.id);
@@ -625,8 +754,21 @@ const SCREENS = {
         <summary style="font-weight:600;cursor:pointer">＋ Add a project</summary>
         <label class="field"><span>Name</span><input class="edit" id="pName" placeholder="e.g. Find a UX designer partner"></label>
         <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pDesc" rows="3" placeholder="One or two sentences. The AI matches contacts against this."></textarea></label>
+        <label class="field"><span>Icon (emoji, optional)</span><input class="edit" id="pEmoji" maxlength="4" placeholder="📌"></label>
         <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="addProject()">Add project</button>
-      </details>`;
+      </details>
+      <div class="card projects-import" style="margin-top:10px">
+        <div style="font-weight:700">Import projects from Notion</div>
+        <p class="muted small">Connect a workspace, choose a shared projects database, and copy its projects into Syncy.</p>
+        ${notionUi.connected ? `<div class="muted small" style="margin-bottom:10px">Connected${notionUi.workspace ? ` to ${esc(notionUi.workspace)}` : ''} · Notion access stays private to your account</div>
+          <button class="btn" onclick="loadNotionSources()" ${notionUi.busy ? 'disabled' : ''}>Choose database</button>
+          ${notionUi.sources.length ? `<label class="field"><span>Projects database</span><select class="edit" id="notionSource" onchange="notionUi.selected=this.value">${notionUi.sources.map(source => `<option value="${esc(source.id)}" ${source.id === notionUi.selected ? 'selected' : ''}>${esc(source.title)}</option>`).join('')}</select></label>
+            <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="importNotionProjects()" ${notionUi.busy ? 'disabled' : ''}>${notionUi.busy ? 'Importing…' : 'Import projects'}</button>` : ''}
+          <button class="linkbtn" style="margin:10px 0 0 10px" onclick="connectNotion()" ${notionUi.busy ? 'disabled' : ''}>Reconnect</button>`
+          : `<button class="btn btn-primary" onclick="connectNotion()" ${notionUi.busy ? 'disabled' : ''}>${notionUi.busy ? 'Connecting…' : 'Connect Notion'}</button>`}
+        ${notionUi.message ? `<div class="muted small" role="status" style="margin-top:10px">${esc(notionUi.message)}</div>` : ''}
+      </div>
+      <button class="btn btn-block" style="margin-top:14px" onclick="signOut()">Sign out</button>`;
   },
 
   scan() {
@@ -756,7 +898,7 @@ const SCREENS = {
         <label class="field" style="flex:1.4"><span>Next step</span><input class="edit" value="${esc(d.next_step)}" oninput="ui.draft.next_step=this.value"></label>
         <label class="field"><span>Due</span><input class="edit" type="date" value="${d.next_step_date || ''}" onchange="ui.draft.next_step_date=this.value||null"></label>
       </div>
-      <div class="label">Follow-up draft <button class="copy" onclick="copyText(this, ui.draft.follow_up_draft)">Copy</button></div>
+      <div class="label">Follow-up draft <span class="label-actions">${srcBadge(d.source, d.profile_url)}<button class="copy" onclick="copyText(this, ui.draft.follow_up_draft)">Copy</button></span></div>
       <textarea class="edit" rows="4" oninput="ui.draft.follow_up_draft=this.value">${esc(d.follow_up_draft)}</textarea>
       <details style="margin-top:12px"><summary class="muted small" style="cursor:pointer">Your original note</summary><p class="small">${esc(d.note_text)}</p></details>
       <p class="muted small" style="margin:8px 2px 0">Nothing is sent to ${esc((d.name || 'them').split(' ')[0])} automatically.</p>
@@ -793,9 +935,10 @@ const SCREENS = {
         ${c.match_reason ? `<div class="reason">${esc(c.match_reason)}</div>` : ''}</div>
       <div class="label">Summary</div><div>${esc(c.summary)}</div>
       ${c.discussed?.length ? `<div class="label">What you talked about</div><div class="card"><ul class="bul">${c.discussed.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
-      <div class="label">Next step</div><div><b>${esc(c.next_step || '—')}</b>${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</div>
-      <div class="label">Stage</div><div><span class="pill grey">${STAGE_LABEL[c.stage]}</span> <span class="muted small">change it in the dashboard</span></div>
-      ${c.follow_up_draft ? `<div class="label">Follow-up draft <button class="copy" onclick="copyText(this, db.get('contacts', ui.contactId).follow_up_draft)">Copy</button></div><div class="card small">${esc(c.follow_up_draft)}</div>` : ''}`;
+      <div class="label">Next step</div>
+      <div class="nextstep"><div style="flex:1"><b>${esc(c.next_step || '—')}</b>${c.next_step_date ? ' · ' + fmtDate(c.next_step_date) : ''}</div>${c.next_step || c.stage === 'to_follow_up' ? `<button class="btn btn-sm btn-done" onclick="completeNextStep()">✓ Done</button>` : ''}</div>
+      <div class="label">Stage</div><div><span class="pill ${c.stage === 'won' ? 'ok' : 'grey'}">${STAGE_LABEL[c.stage]}</span></div>
+      ${c.follow_up_draft ? `<div class="label">Follow-up draft <span class="label-actions">${srcBadge(c.source, c.profile_url)}<button class="copy" onclick="copyText(this, db.get('contacts', ui.contactId).follow_up_draft)">Copy</button></span></div><div class="card small">${esc(c.follow_up_draft)}</div>` : ''}`;
   },
 };
 
@@ -979,7 +1122,7 @@ function startCameraScan() {
   ui.scanner = new Html5Qrcode('qr-reader');
   ui.scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, text => {
     stopCameraScan(); scanned(text);
-  }, () => {}).catch(error => { ui.error = `Camera unavailable: ${error.message}`; alert(ui.error); });
+  }, () => {}).catch(error => { ui.error = `Camera unavailable: ${error.message}`; toast(ui.error, { type: 'error' }); });
 }
 function stopCameraScan() { if (ui.scanner) { const scanner = ui.scanner; ui.scanner = null; scanner.stop().catch(() => {}).finally(() => scanner.clear()); } }
 function scanUrl() {
@@ -990,7 +1133,7 @@ function scanUrl() {
 function scanned(raw) {
   stopCameraScan();
   const canonical = normalizeUrl(raw);
-  if (!canonical) { alert('That QR code does not contain a valid web profile link.'); return; }
+  if (!canonical) { toast('That QR code does not contain a valid web profile link.', { type: 'error' }); return; }
   const parsed = parseProfile(canonical);
   let row = db.findContact(ui.eventId, parsed.profile_url);
   if (!row) {
@@ -1127,7 +1270,7 @@ function toggleRec() {
 }
 function recordLive() {
   if (ui.rec.status === 'recording') { window.syncyVoiceDebug(ui.voiceDebugId, 'stop_clicked'); ui.rec.recorder.stop(); clearInterval(ui.rec.timer); return; }
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { alert('Voice recording is not available in this browser. Use a typed note.'); return; }
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { toast('Voice recording is not available in this browser. Use a typed note.', { type: 'error' }); return; }
   const requestId = ++recordingRequest;
   const contactId = ui.contactId;
   const historyKey = history.state?.key;
@@ -1336,7 +1479,7 @@ async function saveContact(btn) {
     ui.contactId = d.id; ui.draft = null;
     if (ui.from === 'detail') { go('detail'); } else { go('saved'); }
   };
-  if (db.live) save().catch(error => { btn.disabled = false; btn.textContent = ui.from === 'detail' ? 'Save changes' : 'Save contact'; alert(`Could not save this contact: ${error.message}`); });
+  if (db.live) save().catch(error => { btn.disabled = false; btn.textContent = ui.from === 'detail' ? 'Save changes' : 'Save contact'; toast(`Could not save this contact: ${error.message}`, { type: 'error' }); });
   else later(save, 400);
 }
 function openContact(id) {
@@ -1347,46 +1490,75 @@ function openContact(id) {
   go('detail');
 }
 function editContact() { ui.draft = db.get('contacts', ui.contactId); ui.from = 'detail'; go('review'); }
+// The follow-up was done: advance the stage right here, no dashboard trip needed.
+async function completeNextStep() {
+  const c = db.get('contacts', ui.contactId);
+  if (!c) return;
+  db.update('contacts', c.id, {
+    stage: c.stage === 'to_follow_up' ? 'followed_up' : c.stage,
+    next_step: null, next_step_date: null,
+  });
+  render();
+  toast('Follow-up marked as done', { type: 'success' });
+  if (db.live) { try { await db.flush('contacts', c.id); } catch (error) { toast(`Could not save: ${error.message || error}`, { type: 'error' }); } }
+}
 async function deleteCurrentContact() {
   const contact = db.get('contacts', ui.contactId);
-  if (!contact || !confirm(`Delete ${contact.name || 'this contact'} and its note and recording? This cannot be undone.`)) return;
+  if (!contact) return;
+  const ok = await confirmSheet({
+    title: `Delete ${contact.name || 'this contact'}?`,
+    message: 'The note and recording are deleted too. This cannot be undone.',
+    confirmLabel: 'Delete contact', cancelLabel: 'Keep contact', danger: true,
+  });
+  if (!ok) return;
   try {
     const result = await db.deleteContact(contact.id);
     ui.contactId = null; ui.draft = null;
     go(ui.tab);
-    if (!result.audioRemoved) alert('The contact was deleted, but its audio file could not be removed from Storage.');
-  } catch (error) { alert(`Could not delete contact: ${error.message || error}`); }
+    toast('Contact deleted', { type: 'success' });
+    if (!result.audioRemoved) toast('The audio file could not be removed from Storage.', { type: 'error' });
+  } catch (error) { toast(`Could not delete contact: ${error.message || error}`, { type: 'error' }); }
 }
 
 function addProject() {
   const name = document.getElementById('pName').value.trim();
   if (!name) { document.getElementById('pName').focus(); return; }
-  db.insert('projects', { name, description: document.getElementById('pDesc').value.trim(), emoji: '📌', archived: false, external_source: null, external_id: null, external_updated_at: null });
+  db.insert('projects', { name, description: document.getElementById('pDesc').value.trim(), emoji: document.getElementById('pEmoji')?.value.trim() || '📌', archived: false, external_source: null, external_id: null, external_updated_at: null });
   render();
 }
 function projectFormHtml(p) {
+  const contacts = db.list('contacts').filter(c => c.project_id === p.id).length;
   return `<div class="card proj-card">
     <b>Edit project</b>
     <label class="field"><span>Name</span><input class="edit" id="pEditName" value="${esc(p.name)}"></label>
-    <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pEditDesc" rows="3">${esc(p.description || '')}</textarea></label>
+    <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pEditDesc" rows="3" placeholder="One or two sentences. The AI matches contacts against this.">${esc(p.description || '')}</textarea></label>
+    <label class="field"><span>Icon (emoji)</span><input class="edit" id="pEditEmoji" value="${esc(p.emoji || '')}" maxlength="4" placeholder="📌"></label>
+    <div class="muted small" style="margin-top:8px">${contacts} ${contacts === 1 ? 'contact' : 'contacts'} assigned${p.external_source === 'notion' ? ' · imported from Notion (re-import refreshes name and description)' : ''}</div>
     <div class="row" style="margin-top:12px"><button class="btn" onclick="ui.projForm=null;render()">Cancel</button><button class="btn btn-primary" onclick="saveProject('${p.id}')">Save</button></div>
   </div>`;
 }
 async function saveProject(id) {
   const name = document.getElementById('pEditName').value.trim();
   if (!name) { document.getElementById('pEditName').focus(); return; }
-  db.update('projects', id, { name, description: document.getElementById('pEditDesc').value.trim() });
+  db.update('projects', id, { name, description: document.getElementById('pEditDesc').value.trim(), emoji: document.getElementById('pEditEmoji').value.trim() || '📌' });
   ui.projForm = null;
   render();
-  if (db.live) { try { await db.flush('projects', id); } catch (error) { alert(`Could not save the project: ${error.message || error}`); } }
+  if (db.live) { try { await db.flush('projects', id); } catch (error) { toast(`Could not save the project: ${error.message || error}`, { type: 'error' }); } }
 }
 // "Delete" archives the project: contacts keep their notes and history; the project just leaves matching and lists.
 async function deleteProject(id) {
   const p = db.get('projects', id);
-  if (!p || !confirm(`Delete “${p.name}”? Contacts keep their notes; the project disappears from matching and lists.`)) return;
+  if (!p) return;
+  const ok = await confirmSheet({
+    title: `Delete “${p.name}”?`,
+    message: 'Contacts keep their notes; the project disappears from matching and lists.',
+    confirmLabel: 'Delete project', cancelLabel: 'Keep project', danger: true,
+  });
+  if (!ok) return;
   db.update('projects', id, { archived: true });
   render();
-  if (db.live) { try { await db.flush('projects', id); } catch (error) { alert(`Could not delete the project: ${error.message || error}`); } }
+  toast('Project deleted', { type: 'success' });
+  if (db.live) { try { await db.flush('projects', id); } catch (error) { toast(`Could not delete the project: ${error.message || error}`, { type: 'error' }); } }
 }
 // Events hidden from the picker on this device; rows in Supabase are untouched, the dashboard still shows them.
 const HIDDEN_EVENTS_KEY = 'syncy-hidden-events';
@@ -1451,7 +1623,7 @@ function copyText(btn, text) {
 }
 
 window.addEventListener('db-change', () => { if (!['note', 'processing', 'review'].includes(ui.screen)) render(); });
-window.addEventListener('db-error', e => alert(`Could not sync with Supabase: ${e.detail}`));
+window.addEventListener('db-error', e => toast(`Could not sync with Supabase: ${e.detail}`, { type: 'error' }));
 window.addEventListener('auth-change', () => location.replace('login.html?next=index.html'));
 window.addEventListener('popstate', event => {
   stopNoteRecordingForNavigation(event.state?.screen, true);
@@ -1465,7 +1637,7 @@ window.addEventListener('popstate', event => {
 document.addEventListener('input', saveNavigationState);
 document.addEventListener('change', saveNavigationState);
 document.addEventListener('click', saveNavigationState);
-async function signOut() { if (!db.live) { location.reload(); return; } try { await db.signOut(); } catch (error) { alert(`Could not sign out: ${error.message}`); } }
+async function signOut() { if (!db.live) { location.reload(); return; } try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
 // A local checkout has no config.js (it is generated only in the Vercel build), so offer the demo instead.
 function startDemo() {
   document.getElementById('tabbar').style.display = '';
