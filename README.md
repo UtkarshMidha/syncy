@@ -2,9 +2,9 @@
 
 <h1>Syncy</h1>
 
-<p><strong>The conversation ends. The follow-through starts.</strong></p>
+<p><strong>No more wincing at “who was what?”</strong></p>
 
-<p>Turn a post-event conversation into a contact you remember, a project that makes sense, and a next step you can act on.</p>
+<p>Remember who you met, what mattered, and what to do next.</p>
 
 <a href="https://youtu.be/J2zwPH9x2iY">
   <img src="https://img.youtube.com/vi/J2zwPH9x2iY/maxresdefault.jpg" width="960" alt="Watch the Syncy product demo on YouTube" />
@@ -18,9 +18,9 @@
 
 ---
 
-## ✨ The moment between meeting and follow-up
+## ✨ Remember more than a name
 
-You meet someone interesting. You have a good conversation. Then the event ends, the profile link gets buried, and the details that would make a follow-up personal start to fade.
+At a busy event, names, profile links, promises, and project context quickly blur together. Syncy gives every new connection a place to land, then turns your note into a useful next step.
 
 **Syncy keeps the useful parts together.** Capture who you met, add what you talked about while it is fresh, and turn that context into a thoughtful next step.
 
@@ -131,6 +131,6 @@ Watch the product walkthrough, then choose **Settings → Quality → 1080p** in
 
 <div align="center">
 
-**Make the next conversation easier to remember.**
+**Know who you met. Remember what mattered.**
 
 </div>
