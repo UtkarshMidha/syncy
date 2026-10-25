@@ -7,7 +7,7 @@
 <p>Remember who you met, what mattered, and what to do next.</p>
 
 <a href="https://youtu.be/J2zwPH9x2iY">
-  <img src="https://img.youtube.com/vi/J2zwPH9x2iY/maxresdefault.jpg" width="960" alt="Watch the Syncy product demo on YouTube" />
+  <img src="assets/syncy-readme-cover.png" width="960" alt="Syncy — No more wincing at who was what? Click to watch the product demo." />
 </a>
 
 <p><a href="https://youtu.be/J2zwPH9x2iY"><img alt="Watch the product demo" src="https://img.shields.io/badge/%E2%96%B6%20WATCH%20THE%20PRODUCT%20DEMO-FF6B35?style=for-the-badge&logo=youtube&logoColor=white" /></a></p>
