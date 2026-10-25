@@ -261,6 +261,11 @@ select.f.set { border-color: var(--accent); background: var(--accent-soft); }
 button.stat:active { transform: scale(.97) rotate(-1.6deg); }
 button.stat:nth-child(even):active { transform: scale(.97) rotate(1.6deg); }
 @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1.2deg); } 55% { transform: rotate(1.2deg); } 80% { transform: rotate(-.5deg); } }
+/* phones never fire :hover, so the wiggle plays on press there; JS pairs it with a short vibration */
+@media (hover: none) {
+  .btn:active:not(:disabled), .chipbtn:active, .seg button:active, .dhead .x:active, .mobile-nav a:active,
+  .icon-btn:active, .more-toggle:active, .stepper .step:active, .srcline button:active { animation: wiggle .35s var(--ease-out); }
+}
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled), .chipbtn:not(.on):hover, .seg button:hover:not([aria-pressed="true"]), .dhead .x:hover, .mobile-nav a:hover, .icon-btn:hover, .more-toggle:hover, .stepper .step:hover, .srcline button:hover { background-color: var(--grey-soft); }
   .btn:hover:not(:disabled), .nav:hover, .chipbtn:hover, .seg button:hover, button.stat:hover,
@@ -698,6 +703,11 @@ function setSource(id) { state.source = state.source === id ? 'all' : id; state.
 function toggleMore() { state.more = !state.more; renderFilters(); }
 
 async function signOut() { if (!db.live) { location.reload(); return; } try { await db.signOut(); } catch (error) { toast(`Could not sign out: ${error.message}`, { type: 'error' }); } }
+// touch feedback: short vibration on taps (Android; iOS Safari has no vibrate API)
+const haptic = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch' && e.target.closest('button, a, summary, [role="button"]')) haptic(8);
+}, { passive: true, capture: true });
 function openSettings() {
   const wrap = document.createElement('div');
   wrap.className = 'dialog-wrap';
@@ -706,6 +716,7 @@ function openSettings() {
       <h3>Settings</h3>
       <div class="set-row"><span>Account</span><b>${db.live ? esc(db.user?.email || 'Signed in') : 'Not connected'}</b></div>
       <div class="set-row"><span>Voice memos</span><b>Transcribed only, audio never stored</b></div>
+      <div class="set-row"><span>Version</span><b>v. 1.0.0</b></div>
       <div class="dactions" style="margin-top:18px">
         ${db.live ? '' : '<button class="btn" data-act="reset">Reset demo data</button>'}
         <button class="btn" data-act="close">Close</button>

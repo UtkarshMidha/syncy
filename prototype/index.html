@@ -349,6 +349,19 @@ details.card > summary { min-height: 44px; display: flex; align-items: center; }
 }
 .btn:focus-visible, .icon-btn:focus-visible, .proj-action:focus-visible, .chip:focus-visible, .pchip:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
 .pchip:active, .btn:active:not(:disabled), .scan-cta:active, .icon-btn:active, .proj-action:active, .seg button:active, .tabbar button:active, .tabbar a:active { transform: scale(.98); }
+/* phones never fire :hover, so the wiggle plays on press there; JS pairs it with a short vibration */
+@media (hover: none) {
+  .btn:active:not(:disabled), .icon-btn:active, .proj-action:active, .chip:active:not(:disabled), .pchip:active,
+  .seg button:active, .tabbar button:active, .tabbar a:active, .group-toggle:active, .scan-cta:active { animation: wiggle .35s var(--ease-out); }
+  .proj-card.display:active { transform: scale(.985); }
+}
+
+/* ---------- project icon picker ---------- */
+.emoji-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.emoji-opt { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 18px; display: grid; place-items: center; cursor: pointer; padding: 0; transition: background-color .16s, border-color .16s, transform .16s var(--ease-out); }
+.emoji-opt:active { transform: scale(.92); }
+.emoji-opt.on { border-color: var(--accent); background: var(--accent-soft); }
+.emoji-opt.none { color: var(--muted); font-size: 14px; font-weight: 600; }
 
 /* ---------- toasts (Sonner-style: transitions, not keyframes; interruptible) ---------- */
 .toasts { position: absolute; left: 14px; right: 14px; bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 60; }
@@ -477,6 +490,26 @@ function confirmSheet({ title, message, confirmLabel = 'Confirm', cancelLabel = 
   });
 }
 
+// ---------- touch feedback: short vibration on taps (Android; iOS Safari has no vibrate API) ----------
+const haptic = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch' && e.target.closest('button, a, summary, [role="button"], .chip, .pchip')) haptic(8);
+}, { passive: true, capture: true });
+
+// ---------- project icon picker (📌 is the default; the ✕ option removes the icon) ----------
+const EMOJI_CHOICES = ['📌', '🚀', '💼', '🎯', '🤝', '💡', '🧑‍💻', '📈', '🏗️', '🌱', '🎨', '🔍'];
+function emojiPickerHtml(inputId, current) {
+  return `<div class="emoji-pick" role="group" aria-label="Choose an icon">
+    ${EMOJI_CHOICES.map(e => `<button type="button" class="emoji-opt${current === e ? ' on' : ''}" aria-label="Use ${e} as the icon" onclick="pickEmoji('${inputId}', '${e}', this)">${e}</button>`).join('')}
+    <button type="button" class="emoji-opt none${current ? '' : ' on'}" aria-label="No icon" title="No icon" onclick="pickEmoji('${inputId}', '', this)">✕</button>
+  </div>`;
+}
+function pickEmoji(inputId, emoji, btn) {
+  const input = document.getElementById(inputId);
+  if (input) input.value = emoji;
+  btn.closest('.emoji-pick').querySelectorAll('.emoji-opt').forEach(b => b.classList.toggle('on', b === btn));
+}
+
 // ---------- settings (gear in every tab's top-right) ----------
 const GEAR_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01c.26.63.87 1.04 1.56 1.04H21a2 2 0 1 1 0 4h-.09c-.69 0-1.3.41-1.51 1.03Z"/></svg>`;
 const gearBtn = () => `<button class="icon-btn" type="button" aria-label="Settings" title="Settings" onclick="openSettings()">${GEAR_SVG}</button>`;
@@ -489,6 +522,7 @@ function openSettings() {
       <h3>Settings</h3>
       <div class="set-row"><span>Account</span><b>${db.live ? esc(db.user?.email || 'Signed in') : 'Not connected'}</b></div>
       <div class="set-row"><span>Voice memos</span><b>Transcribed only, audio never stored</b></div>
+      <div class="set-row"><span>Version</span><b>v. 1.0.0</b></div>
       ${db.live ? '' : '<button class="btn btn-block" style="margin-top:14px" data-act="reset">Reset demo data</button>'}
       <button class="btn btn-block btn-danger" ${db.live ? 'style="margin-top:14px"' : ''} data-act="signout">Sign out</button>
       <button class="btn btn-block" data-act="close">Close</button>
@@ -593,7 +627,7 @@ function srcBadge(source, url) {
 }
 function initials2(name) { return (String(name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) || '?').toUpperCase(); }
 function projTag(p) { return `<span class="ptag" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
-function projThumb(p) { return p.emoji && p.emoji !== '📌' ? `<span class="pthumb" style="background:var(--grey-soft)">${esc(p.emoji)}</span>` : `<span class="pthumb" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
+function projThumb(p) { return p.emoji ? `<span class="pthumb" style="background:var(--grey-soft)">${esc(p.emoji)}</span>` : `<span class="pthumb" style="background:${color(p.name)}">${esc(initials2(p.name))}</span>`; }
 const SOURCE_LABEL = { qr_linkedin: 'LinkedIn', qr_xing: 'Xing', qr_other: 'Profile', manual: 'Manual' };
 function fmtDate(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
 function addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
@@ -823,7 +857,8 @@ const SCREENS = {
         <summary style="font-weight:600;cursor:pointer">＋ Add a project</summary>
         <label class="field"><span>Name</span><input class="edit" id="pName" placeholder="e.g. Find a UX designer partner"></label>
         <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pDesc" rows="3" placeholder="One or two sentences. The AI matches contacts against this."></textarea></label>
-        <label class="field"><span>Icon (emoji, optional)</span><input class="edit" id="pEmoji" maxlength="4" placeholder="📌"></label>
+        <label class="field"><span>Icon</span><input class="edit" id="pEmoji" maxlength="4" value="📌" placeholder="No icon"></label>
+        ${emojiPickerHtml('pEmoji', '📌')}
         <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="addProject()">Add project</button>
       </details>
       <details class="card projects-import" style="margin-top:10px" ${notionUi.connected || notionUi.busy || notionUi.message ? 'open' : ''}>
@@ -1591,7 +1626,7 @@ async function deleteCurrentContact() {
 function addProject() {
   const name = document.getElementById('pName').value.trim();
   if (!name) { document.getElementById('pName').focus(); return; }
-  db.insert('projects', { name, description: document.getElementById('pDesc').value.trim(), emoji: document.getElementById('pEmoji')?.value.trim() || '📌', archived: false, external_source: null, external_id: null, external_updated_at: null });
+  db.insert('projects', { name, description: document.getElementById('pDesc').value.trim(), emoji: document.getElementById('pEmoji')?.value.trim() || '', archived: false, external_source: null, external_id: null, external_updated_at: null });
   render();
 }
 function projectFormHtml(p) {
@@ -1600,7 +1635,8 @@ function projectFormHtml(p) {
     <b>Edit project</b>
     <label class="field"><span>Name</span><input class="edit" id="pEditName" value="${esc(p.name)}"></label>
     <label class="field"><span>What are you looking for?</span><textarea class="edit" id="pEditDesc" rows="3" placeholder="One or two sentences. The AI matches contacts against this.">${esc(p.description || '')}</textarea></label>
-    <label class="field"><span>Icon (emoji)</span><input class="edit" id="pEditEmoji" value="${esc(p.emoji || '')}" maxlength="4" placeholder="📌"></label>
+    <label class="field"><span>Icon</span><input class="edit" id="pEditEmoji" value="${esc(p.emoji || '')}" maxlength="4" placeholder="No icon"></label>
+    ${emojiPickerHtml('pEditEmoji', p.emoji || '')}
     <div class="muted small" style="margin-top:8px">${contacts} ${contacts === 1 ? 'contact' : 'contacts'} assigned${p.external_source === 'notion' ? ' · imported from Notion (re-import refreshes name and description)' : ''}</div>
     <div class="row" style="margin-top:12px"><button class="btn" onclick="ui.projForm=null;render()">Cancel</button><button class="btn btn-primary" onclick="saveProject('${p.id}')">Save</button></div>
   </div>`;
@@ -1608,7 +1644,7 @@ function projectFormHtml(p) {
 async function saveProject(id) {
   const name = document.getElementById('pEditName').value.trim();
   if (!name) { document.getElementById('pEditName').focus(); return; }
-  db.update('projects', id, { name, description: document.getElementById('pEditDesc').value.trim(), emoji: document.getElementById('pEditEmoji').value.trim() || '📌' });
+  db.update('projects', id, { name, description: document.getElementById('pEditDesc').value.trim(), emoji: document.getElementById('pEditEmoji').value.trim() });
   ui.projForm = null;
   render();
   if (db.live) { try { await db.flush('projects', id); } catch (error) { toast(`Could not save the project: ${error.message || error}`, { type: 'error' }); } }
