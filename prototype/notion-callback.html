@@ -4,17 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f6f8">
+  <link rel="stylesheet" href="theme.css">
   <title>Connecting Notion · Syncy</title>
   <style>
-    :root { --bg:#f4f6f8; --panel:#fff; --ink:#171a21; --muted:#667085; --line:#e3e7ee; --accent:#e4602a; --accent-ink:#a8431a; --accent-2:#f3a33f; --shadow:0 1px 2px rgba(23,26,33,.05),0 8px 22px rgba(23,26,33,.07); }
-    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, sans-serif; }
-    main { box-sizing: border-box; width: min(420px, 100%); padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); overflow-wrap: anywhere; }
-    h1 { margin-top: 0; font-size: 22px; } p { color: var(--muted); } a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 0; color: var(--accent-ink); }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-sans); }
+    main { box-sizing: border-box; width: min(420px, 100%); padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--panel); box-shadow: var(--shadow); overflow-wrap: anywhere; }
+    .brand { display: flex; align-items: center; gap: 9px; margin-bottom: 22px; font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+    .logo { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #f1ba78, var(--accent-2) 46%, var(--accent) 100%); box-shadow: 0 3px 12px rgba(184,74,27,.18); }
+    h1 { margin-top: 0; font-size: 22px; line-height: 1.25; letter-spacing: -.02em; } p { color: var(--muted); } a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 0; color: var(--accent-ink); }
     a:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
   </style>
 </head>
 <body>
   <main>
+    <div class="brand"><span class="logo" aria-hidden="true"></span><span>Syncy</span></div>
     <h1 id="title">Connecting your Notion workspace…</h1>
     <p id="message" role="status" aria-live="polite">Syncy is securely completing the connection.</p>
     <a id="back" href="index.html?tab=projects" hidden>Return to Syncy Projects</a>

@@ -4,22 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f6f8">
+  <link rel="stylesheet" href="theme.css">
   <title>Sign in · Syncy</title>
   <style>
-    :root { color-scheme:light; --bg:#f4f6f8; --panel:#fff; --ink:#171a21; --muted:#667085; --line:#e3e7ee; --accent:#e4602a; --accent-cta:#c2410c; --accent-hover:#a8431a; --accent-ink:#a8431a; --accent-2:#f3a33f; --grey-soft:#eef1f5; --danger:#c2372b; --shadow:0 1px 2px rgba(23,26,33,.05),0 8px 22px rgba(23,26,33,.07); }
     * { box-sizing:border-box }
-    body { margin:0; min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px; background:var(--bg); color:var(--ink); font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
-    .card { width:min(100%,440px); padding:30px; background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow) }
+    body { margin:0; min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px; background:var(--bg); color:var(--ink); font:16px/1.5 var(--font-sans) }
+    .card { width:min(100%,440px); padding:30px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow) }
     .brand { display:flex; align-items:center; gap:10px; margin-bottom:26px; font-weight:750; font-size:20px }
-    .logo { width:18px; height:18px; border-radius:50%; background:var(--accent-2) }
+    .logo { width:30px; height:30px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #f1ba78, var(--accent-2) 46%, var(--accent) 100%); box-shadow:0 3px 12px rgba(184,74,27,.18) }
     h1 { margin:0; font-size:27px; letter-spacing:-.03em }
     .sub { margin:7px 0 22px; color:var(--muted) }
     label { display:block; margin:14px 0 6px; font-size:13px; font-weight:650 }
     input { width:100%; min-height:48px; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:white; color:var(--ink); font:inherit }
     input:focus { border-color:var(--accent) }
     :focus-visible { outline:3px solid var(--accent-ink); outline-offset:2px }
-    button { width:100%; min-height:48px; padding:11px 14px; border:0; border-radius:10px; background:var(--grey-soft); color:var(--ink); font:inherit; font-weight:650; cursor:pointer; transition:background-color .15s,color .15s }
-    button:hover:not(:disabled) { background:var(--grey-soft) }
+    button { width:100%; min-height:48px; padding:11px 14px; border:0; border-radius:10px; background:var(--grey-soft); color:var(--ink); font:inherit; font-weight:650; cursor:pointer; transition:background-color .16s,color .16s,transform .16s var(--ease-out) }
+    button:hover:not(:disabled) { background:var(--grey-hover) }
+    button:active:not(:disabled) { transform:scale(.99) }
     button:disabled { opacity:.6; cursor:wait }
     .primary { margin-top:18px; background:var(--accent-cta); color:white }
     .primary:hover:not(:disabled) { background:var(--accent-hover) }
@@ -34,7 +35,7 @@
     [hidden] { display:none !important }
     @media(max-width:480px) {
       body { place-items:start center; padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)) }
-      .card { padding:23px 20px; margin-block:auto }
+      .card { padding:24px 20px; margin-block:auto }
     }
   </style>
 </head>
