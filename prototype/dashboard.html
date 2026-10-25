@@ -812,11 +812,15 @@ function copyDraft(btn) {
   btn.textContent = 'Copied ✓';
   setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
-// A Claude-style greeting instead of a static page title.
+// A Claude-style greeting instead of a static page title — always addressed to the user by name.
 (function setGreeting() {
+  const meta = db.user?.user_metadata || {};
+  const raw = String(meta.full_name || meta.name || (db.user?.email || '').split('@')[0] || '').trim();
+  const first = raw.split(/[\s._-]+/)[0].replace(/\d+/g, '');
+  const name = first ? first[0].toUpperCase() + first.slice(1) : 'there';
   const h = new Date().getHours();
-  const timed = h < 5 ? 'Up late? 🌙' : h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 👋' : 'Good evening 🌆';
-  const playful = ['How is it going?', 'Welcome back 👋', 'Nice to see you again', 'Ready to follow up?', 'Who did you meet today?'];
+  const timed = h < 5 ? `Up late, ${name}? 🌙` : h < 12 ? `Good morning, ${name} ☀️` : h < 18 ? `Good afternoon, ${name} 👋` : `Good evening, ${name} 🌆`;
+  const playful = [`How is it going, ${name}?`, `Welcome back, ${name} 👋`, `Nice to see you again, ${name}`, `Ready to follow up, ${name}?`, `Who did you meet today, ${name}?`];
   document.getElementById('pageTitle').textContent = Math.random() < 0.5 ? timed : playful[Math.floor(Math.random() * playful.length)];
 })();
 document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; state.statFilter = null; renderRows(); document.getElementById('clearBtn').style.visibility = isFiltered() ? 'visible' : 'hidden'; });
