@@ -200,7 +200,7 @@ Deno.serve(async req => {
       for (const project of imported) {
         const id = existing[project.external_id];
         const result = id
-          ? await admin.from('projects').update({ name: project.name, description: project.description, external_updated_at: project.external_updated_at })
+          ? await admin.from('projects').update({ name: project.name, description: project.description, external_updated_at: project.external_updated_at, archived: false })
               .eq('id', id).eq('user_id', userId)
           : await admin.from('projects').insert(project);
         if (result.error) throw result.error;
