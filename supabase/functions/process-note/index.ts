@@ -23,21 +23,24 @@ const envAny = (...names: string[]) => {
 const failure = (status: number, what: string) =>
   status === 429 ? 'The AI service is rate-limiting requests right now. Wait a minute and try again.' : `${what} failed (${status}).`;
 const GROQ_V1 = 'https://api.groq.com/openai/v1';
+/** Only reachable by overriding LLM_BASE_URL/STT_BASE_URL; the legacy OpenRouter secrets apply on this path. */
 const OPENROUTER_V1 = 'https://openrouter.ai/api/v1';
-/** Groq is the primary provider when GROQ_API_KEY is set; otherwise the legacy OpenRouter secrets are used. */
-const useGroq = () => Boolean(envAny('GROQ_API_KEY'));
-const resolveBase = (override: string) => (envAny(override) || (useGroq() ? GROQ_V1 : OPENROUTER_V1)).replace(/\/+$/, '');
-const resolveKey = (...names: string[]) => {
-  const key = envAny(...names);
-  if (!key) throw new Error(`Missing Edge Function secret: ${names.join(' or ')}.`);
+/** Groq is the default provider unless the base URL is overridden. */
+const resolveBase = (override: string) => (envAny(override) || GROQ_V1).replace(/\/+$/, '');
+const legacyOpenRouter = (base: string) => base.includes('openrouter');
+/** Groq key by default; the legacy OpenRouter key only when the base URL was switched to OpenRouter. */
+const resolveKey = (override: string, base: string) => {
+  const key = envAny(override, legacyOpenRouter(base) ? 'OPENROUTER_API_KEY' : 'GROQ_API_KEY');
+  if (!key) throw new Error(`Missing Edge Function secret: ${override} (or GROQ_API_KEY).`);
   return key;
 };
 const parseJson = (s: string) => JSON.parse(s.replace(/^```(?:json)?\s*|\s*```$/g, '').trim());
 
 async function transcribeAudio(audio: Blob, filename: string, debugId: string) {
   const base = resolveBase('STT_BASE_URL');
-  const apiKey = resolveKey('STT_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY');
-  const model = envAny('STT_MODEL', 'GROQ_STT_MODEL', 'WHISPER_MODEL') || (useGroq() ? 'whisper-large-v3' : 'openai/whisper-1');
+  const apiKey = resolveKey('STT_API_KEY', base);
+  // Groq's Whisper by default; legacy model secrets only apply on the OpenRouter path (OpenRouter slugs 404 on Groq).
+  const model = envAny('STT_MODEL', 'GROQ_STT_MODEL') || (legacyOpenRouter(base) ? envAny('WHISPER_MODEL') || 'openai/whisper-1' : 'whisper-large-v3');
   const form = new FormData();
   form.set('file', audio, filename);
   form.set('model', model);
@@ -59,9 +62,10 @@ async function transcribeAudio(audio: Blob, filename: string, debugId: string) {
 
 async function llm(prompt: string, input: unknown, debugId: string, step: string) {
   const base = resolveBase('LLM_BASE_URL');
-  const apiKey = resolveKey('LLM_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY');
-  const model = envAny('LLM_MODEL', 'GROQ_LLM_MODEL', 'OPENROUTER_MODEL') || (useGroq() ? 'openai/gpt-oss-120b' : '');
-  if (!model) throw new Error('Missing Edge Function secret: GROQ_API_KEY (or legacy OPENROUTER_MODEL).');
+  const apiKey = resolveKey('LLM_API_KEY', base);
+  // Groq's gpt-oss by default; legacy model secrets only apply on the OpenRouter path.
+  const model = envAny('LLM_MODEL', 'GROQ_LLM_MODEL') || (legacyOpenRouter(base) ? envAny('OPENROUTER_MODEL') : 'openai/gpt-oss-120b');
+  if (!model) throw new Error('Missing Edge Function secret: OPENROUTER_MODEL (needed only on the OpenRouter path).');
   const groq = base.includes('groq');
   // gpt-oss spends reasoning tokens from the same budget as the answer: too small and content comes back empty (finish_reason "length").
   const budget = groq ? { max_completion_tokens: 4000 } : { max_tokens: 900 };
