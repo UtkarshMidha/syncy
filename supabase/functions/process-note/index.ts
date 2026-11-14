@@ -12,53 +12,83 @@ const required = (name: string) => {
   if (!value) throw new Error(`Missing Edge Function secret: ${name}`);
   return value;
 };
+/** First non-empty value among the given secret names, or ''. Lets the generic LLM_/STT_ overrides or Groq secrets take precedence over the legacy OpenRouter secrets. */
+const envAny = (...names: string[]) => {
+  for (const name of names) {
+    const value = Deno.env.get(name)?.trim();
+    if (value) return value;
+  }
+  return '';
+};
+const failure = (status: number, what: string) =>
+  status === 429 ? 'The AI service is rate-limiting requests right now. Wait a minute and try again.' : `${what} failed (${status}).`;
+const GROQ_V1 = 'https://api.groq.com/openai/v1';
+const OPENROUTER_V1 = 'https://openrouter.ai/api/v1';
+/** Groq is the primary provider when GROQ_API_KEY is set; otherwise the legacy OpenRouter secrets are used. */
+const useGroq = () => Boolean(envAny('GROQ_API_KEY'));
+const resolveBase = (override: string) => (envAny(override) || (useGroq() ? GROQ_V1 : OPENROUTER_V1)).replace(/\/+$/, '');
+const resolveKey = (...names: string[]) => {
+  const key = envAny(...names);
+  if (!key) throw new Error(`Missing Edge Function secret: ${names.join(' or ')}.`);
+  return key;
+};
 const parseJson = (s: string) => JSON.parse(s.replace(/^```(?:json)?\s*|\s*```$/g, '').trim());
 
 async function transcribeAudio(audio: Blob, filename: string, debugId: string) {
-  const model = Deno.env.get('WHISPER_MODEL') || 'openai/whisper-1';
+  const base = resolveBase('STT_BASE_URL');
+  const apiKey = resolveKey('STT_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY');
+  const model = envAny('STT_MODEL', 'GROQ_STT_MODEL', 'WHISPER_MODEL') || (useGroq() ? 'whisper-large-v3' : 'openai/whisper-1');
   const form = new FormData();
   form.set('file', audio, filename);
   form.set('model', model);
   form.set('response_format', 'json');
   const started = Date.now();
-  console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'openrouter_transcription_started', model, audio_bytes: audio.size }));
-  const response = await fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
-    method: 'POST', headers: { Authorization: `Bearer ${required('OPENROUTER_API_KEY')}` }, body: form,
+  console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'stt_transcription_started', endpoint: base, model, audio_bytes: audio.size }));
+  const response = await fetch(`${base}/audio/transcriptions`, {
+    method: 'POST', headers: { Authorization: `Bearer ${apiKey}` }, body: form,
   });
   if (!response.ok) {
-    console.error(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'openrouter_transcription_failed', status: response.status, duration_ms: Date.now() - started }));
-    throw new Error(`Whisper transcription failed (${response.status}).`);
+    console.error(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'stt_transcription_failed', status: response.status, duration_ms: Date.now() - started }));
+    throw new Error(failure(response.status, 'Whisper transcription'));
   }
   const result = await response.json();
   const text = typeof result.text === 'string' ? result.text.trim() : '';
-  console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'openrouter_transcription_succeeded', transcript_chars: text.length, duration_ms: Date.now() - started, cost: result.usage?.cost }));
+  console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'stt_transcription_succeeded', transcript_chars: text.length, duration_ms: Date.now() - started, cost: result.usage?.cost }));
   return { text, cost: result.usage?.cost, durationMs: Date.now() - started };
 }
 
 async function llm(prompt: string, input: unknown, debugId: string, step: string) {
-  const apiKey = required('OPENROUTER_API_KEY');
-  const model = required('OPENROUTER_MODEL');
+  const base = resolveBase('LLM_BASE_URL');
+  const apiKey = resolveKey('LLM_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY');
+  const model = envAny('LLM_MODEL', 'GROQ_LLM_MODEL', 'OPENROUTER_MODEL') || (useGroq() ? 'openai/gpt-oss-120b' : '');
+  if (!model) throw new Error('Missing Edge Function secret: GROQ_API_KEY (or legacy OPENROUTER_MODEL).');
+  const groq = base.includes('groq');
+  // gpt-oss spends reasoning tokens from the same budget as the answer: too small and content comes back empty (finish_reason "length").
+  const budget = groq ? { max_completion_tokens: 4000 } : { max_tokens: 900 };
   for (let attempt = 0; attempt < 2; attempt++) {
-    console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_request_started', step, model, attempt: attempt + 1 }));
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    console.info(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_request_started', step, endpoint: base, model, attempt: attempt + 1 }));
+    const response = await fetch(`${base}/chat/completions`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'Syncy' },
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...(groq ? {} : { 'X-Title': 'Syncy' }) },
       body: JSON.stringify({
         model,
         messages: [{ role: 'system', content: prompt }, { role: 'user', content: JSON.stringify(input) }],
         response_format: { type: 'json_object' },
         temperature: 0.2,
-        max_tokens: 900,
+        ...budget,
       }),
     });
-    if (!response.ok) { console.error(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_request_failed', step, status: response.status })); throw new Error(`OpenRouter request failed (${response.status})`); }
+    if (!response.ok) { console.error(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_request_failed', step, status: response.status })); throw new Error(failure(response.status, 'AI request')); }
     const payload = await response.json();
+    const choice = payload.choices?.[0];
+    const content = choice?.message?.content || '';
     try {
-      const value = parseJson(payload.choices?.[0]?.message?.content || '');
+      const value = parseJson(content);
       console.log(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_request_succeeded', step, model, usage: payload.usage }));
       return value;
     } catch (error) {
-      if (attempt) throw new Error('AI returned invalid JSON twice');
+      console.error(JSON.stringify({ tag: 'VOICE-DEBUG', debug_id: debugId, stage: 'llm_response_unreadable', step, model, attempt: attempt + 1, finish_reason: choice?.finish_reason, content_chars: content.length }));
+      if (attempt) throw new Error(choice?.finish_reason === 'length' ? 'The AI ran out of response tokens before finishing. Retry processing this note.' : 'AI returned invalid JSON twice');
     }
   }
   throw new Error('AI response could not be read');
